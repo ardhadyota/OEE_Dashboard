@@ -3,9 +3,9 @@ import pandas as pd
 import plotly.express as px
 
 # 1. Konfigurasi Halaman
-st.set_page_config(page_title="OEE Dashboard", layout="wide")
+st.set_page_config(page_title="OEE Analytics & AI Insights", layout="wide")
 
-st.title("🏭 OEE Analytics Dashboard")
+st.title("🏭 OEE Analytics Dashboard & AI Insights")
 
 # 2. Sidebar Uploader & Filter
 st.sidebar.header("📁 Upload & Filter")
@@ -25,7 +25,6 @@ if uploaded_file is not None:
         df['Perf_pct'] = df['% Performance'] * 100 if df['% Performance'].max() <= 1.0 else df['% Performance']
         df['Qual_pct'] = df['Quality'] * 100 if df['Quality'].max() <= 1.0 else df['Quality']
 
-        # Hitung Rata-rata OEE Keseluruhan Line
         overall_avg_oee = df['OEE_pct'].mean()
         TARGET_OEE = 94.0
 
@@ -34,7 +33,6 @@ if uploaded_file is not None:
         # ==========================================
         st.subheader("🎯 Target vs Aktual Pencapaian OEE (Semua Line)")
         
-        # Buat dataframe ringkas untuk 2 batang
         df_target_vs_actual = pd.DataFrame({
             "Kategori": ["Target OEE", "Aktual OEE (Rata-Rata)"],
             "Persentase": [TARGET_OEE, overall_avg_oee],
@@ -48,19 +46,14 @@ if uploaded_file is not None:
             text="Persentase",
             color="Warna",
             color_discrete_map={
-                "Target (94%)": "#2E7D32",  # Hijau
-                "Aktual": "#1976D2" if overall_avg_oee >= TARGET_OEE else "#D32F2F" # Biru jika tercapai, Merah jika kurang
+                "Target (94%)": "#2E7D32", 
+                "Aktual": "#1976D2" if overall_avg_oee >= TARGET_OEE else "#D32F2F"
             },
             title=f"Perbandingan Target ({TARGET_OEE}%) vs Rata-Rata OEE Aktual ({overall_avg_oee:.2f}%)"
         )
 
         fig_target.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-        fig_target.update_layout(
-            yaxis=dict(range=[0, 110]),
-            showlegend=False,
-            height=380
-        )
-        
+        fig_target.update_layout(yaxis=dict(range=[0, 110]), showlegend=False, height=350)
         st.plotly_chart(fig_target, width="stretch")
 
         st.markdown("---")
@@ -80,16 +73,44 @@ if uploaded_file is not None:
         avg_perf = df_filtered['Perf_pct'].mean()
         avg_qual = df_filtered['Qual_pct'].mean()
 
+        st.subheader(f"📊 Ringkasan Pencapaian: {selected_line}")
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric(f"OEE ({selected_line})", f"{avg_oee:.2f}%", delta=f"{avg_oee - TARGET_OEE:.2f}% vs Target 94%")
-        c2.metric("Availability", f"{avg_avail:.2f}%")
-        c3.metric("Performance", f"{avg_perf:.2f}%")
-        c4.metric("Quality", f"{avg_qual:.2f}%")
+        c1.metric("OEE", f"{avg_oee:.2f}%", delta=f"{avg_oee - TARGET_OEE:.2f}% vs Target 94%")
+        c2.metric("Availability", f"{avg_avail:.2f}%", delta=f"{avg_avail - 90.0:.2f}% vs Standar World Class (90%)")
+        c3.metric("Performance", f"{avg_perf:.2f}%", delta=f"{avg_perf - 95.0:.2f}% vs Standar World Class (95%)")
+        c4.metric("Quality", f"{avg_qual:.2f}%", delta=f"{avg_qual - 99.0:.2f}% vs Standar World Class (99%)")
         
+        # ==========================================
+        # 5. ROBOT ANALISIS AI (AI INSIGHTS)
+        # ==========================================
+        st.info("🤖 **Analisis AI & Rekomendasi Tindakan**")
+        
+        ai_notes = []
+        if avg_oee >= TARGET_OEE:
+            ai_notes.append(f"✅ **Pencapaian Sangat Baik:** Performa OEE ({avg_oee:.2f}%) berhasil melampaui target perusahaan sebesar {TARGET_OEE}%.")
+        else:
+            ai_notes.append(f"⚠️ **Di Bawah Target:** Performa OEE ({avg_oee:.2f}%) belum mencapai target {TARGET_OEE}% (Selisih: {avg_oee - TARGET_OEE:.2f}%).")
+
+        # Deteksi Bottleneck Komponen
+        bottlenecks = []
+        if avg_avail < 90.0:
+            bottlenecks.append(f"- **Availability Low ({avg_avail:.2f}%):** Terjadi banyak waktu ketiadaan produksi/breakdown mesin. Fokus pada perbaikan *Breakdown Maintenance* & durasi *Setup/Changeover*.")
+        if avg_perf < 95.0:
+            bottlenecks.append(f"- **Performance Low ({avg_perf:.2f}%):** Mesin beroperasi di bawah kecepatan ideal atau ada *minor stoppage* (mesin sering berhenti sesaat). Rekomendasi: Evaluasi *Ideal Cycle Time* & cek keausan komponen teknis.")
+        if avg_qual < 99.0:
+            bottlenecks.append(f"- **Quality Low ({avg_qual:.2f}%):** Ditemukan rasio produk cacat/reject atau rework yang tinggi. Rekomendasi: Inspeksi parameter proses cetak/setting mesin dan material masukan.")
+
+        if bottlenecks:
+            ai_notes.append("**Bottleneck / Area Masalah Utama:**\n" + "\n".join(bottlenecks))
+        else:
+            ai_notes.append("🌟 Semua komponen 3 (Availability, Performance, Quality) memenuhi standar efisiensi industri World Class.")
+
+        st.markdown("\n\n".join(ai_notes))
+
         st.markdown("---")
 
         # ==========================================
-        # 5. DIAGRAM BATANG PER LINE & TREN HARIAN
+        # 6. DIAGRAM BATANG PER LINE & TREN HARIAN
         # ==========================================
         st.subheader("📊 Perbandingan Pencapaian OEE per Line")
         df_line_oee = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct", ascending=False)

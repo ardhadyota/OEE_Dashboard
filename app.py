@@ -177,12 +177,22 @@ DEFAULT_TARGETS = {
 TARGET_OVERALL_DEFAULT = 94.0
 
 # ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR (UKURAN RAPI/KECIL)
+# MENAMPILKAN LOGO DI SIDEBAR (KARTU PUTIH PROPORSIIONAL)
 # ==========================================
 if os.path.exists("logo.png"):
-    col1, col2, col3 = st.sidebar.columns([1, 2, 1])
-    with col2:
-        st.image("logo.png", width=130)
+    st.sidebar.markdown("""
+        <div style="
+            background-color: #FFFFFF;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 0 auto 15px auto;
+            width: 75%;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+        ">
+    """, unsafe_allow_html=True)
+    st.sidebar.image("logo.png", use_container_width=True)
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 else:
     st.sidebar.markdown("<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>", unsafe_allow_html=True)
 

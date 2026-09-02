@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+import base64
 
 # 1. KONFIGURASI HALAMAN DAN CUSTOM CSS
 st.set_page_config(
@@ -169,22 +170,25 @@ DEFAULT_TARGETS = {
 TARGET_OVERALL_DEFAULT = 94.0
 
 # ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR (PROPORSI RAPI & TERANG)
+# MENAMPILKAN LOGO DI SIDEBAR (BASE64 FIXED SIZE)
 # ==========================================
 if os.path.exists("logo.png"):
-    st.sidebar.markdown("""
+    with open("logo.png", "rb") as f:
+        img_b64 = base64.b64encode(f.read()).decode()
+    
+    st.sidebar.markdown(f"""
         <div style="
             background-color: #FFFFFF;
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 12px;
             text-align: center;
-            margin: 10px auto 15px auto;
-            width: 70%;
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+            width: 130px;
+            margin: 10px auto 20px auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         ">
+            <img src="data:image/png;base64,{img_b64}" style="width: 100%; height: auto; display: block;">
+        </div>
     """, unsafe_allow_html=True)
-    st.sidebar.image("logo.png", use_container_width=True)
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 else:
     st.sidebar.markdown("<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>", unsafe_allow_html=True)
 

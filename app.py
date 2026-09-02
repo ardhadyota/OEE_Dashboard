@@ -127,20 +127,20 @@ st.markdown("""
 
 # 2. DEFINISI TARGET SPESIFIK LINE
 DEFAULT_TARGETS = {
-    "BTP MIXING": 99.00,
+    "BTP MIXING": 95.0,
     "BUTYL TAPE LINE 1": 96.74,
     "BUTYL TAPE LINE 2": 96.74,
     "BUTYL TAPE LINE 3": 96.74,
     "BUTYL TAPE LINE 5": 96.74,
     "OROTEX 5001-ID": 93.0,
-    "PAD PILLAR NOUTONG": 80,
+    "PAD PILLAR NOUTONG": 80.0,
     "PEREDAM-REPACKING": 95.0,
     "PVC LINE MC 1": 92.0,
     "PVC LINE MC 2": 92.0,
     "STF EXTRUDING SHIFT 1": 90.0,
     "STF EXTRUDING SHIFT 2": 90.0,
     "STF MIXING": 98.0,
-    "STF PUNCHING 1": 99.0,
+    "STF PUNCHING 1": 98.0,
     "STF PUNCHING 2": 98.0,
     "STF PUNCHING 3": 98.0
 }
@@ -206,6 +206,8 @@ if uploaded_file is not None:
         selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
         
         df_filtered = df.copy() if selected_line == "Semua Line" else df[df["LineID"] == selected_line]
+        
+        # Penentuan Target Spesifik Berdasarkan Filter
         active_target = TARGET_OVERALL_DEFAULT if selected_line == "Semua Line" else DEFAULT_TARGETS.get(selected_line, TARGET_OVERALL_DEFAULT)
         overall_avg_oee = df['OEE_pct'].mean()
 
@@ -280,22 +282,18 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # 5. CHART SECTION 2: RATIO PENCAPAIAN PER LINE (CONTOH SESUAI GAMBAR ACUAN)
+        # 5. CHART SECTION 2: RATIO PENCAPAIAN PER LINE
         st.markdown('<div class="section-title">Ratio Pencapaian per Line [Ratio]</div>', unsafe_allow_html=True)
         
         df_line_ratio = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index()
         df_line_ratio['Ratio'] = df_line_ratio['OEE_pct'] / df_line_ratio['Target_Line']
         df_line_ratio['Selisih_pct'] = df_line_ratio['OEE_pct'] - df_line_ratio['Target_Line']
-        
-        # Urutkan ratio dari tertinggi ke terendah
         df_line_ratio = df_line_ratio.sort_values(by="Ratio", ascending=False)
         
-        # Penentuan Warna Batang Berdasarkan Ratio (>= 1.0 -> Biru/Hijau, < 1.0 -> Merah)
         bar_colors = ['#60A5FA' if r >= 1.0 else '#F87171' for r in df_line_ratio['Ratio']]
         
         fig_ratio = go.Figure()
 
-        # 1. Grafik Batang Ratio
         hover_texts = [
             f"<b>{line}</b><br>Target: {tgt:.1f}%<br>Aktual: {oee:.1f}%<br>Selisih: {sel:+.1f}%<br>Ratio: {r:.3f}"
             for line, tgt, oee, sel, r in zip(
@@ -319,7 +317,6 @@ if uploaded_file is not None:
             hovertext=hover_texts
         ))
 
-        # 2. Garis Merah Horizontal Target = 1.0
         fig_ratio.add_shape(
             type="line",
             x0=-0.5,
@@ -356,20 +353,66 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # Tren Pergerakan Harian
+        # 6. TREN PERGERAKAN HARIAN (DENGAN TARGET DINAMIS PER LINE & VISUAL TANGGAL DETAIL)
         st.markdown(f'<div class="section-title">Tren Pergerakan OEE Harian Line {selected_line}</div>', unsafe_allow_html=True)
-        if selected_line == "Semua Line":
-            df_daily_trend = df.groupby("Tgl")["OEE_pct"].mean().reset_index()
-            fig_line = px.line(df_daily_trend, x="Tgl", y="OEE_pct", markers=True)
-        else:
-            fig_line = px.line(df_filtered, x="Tgl", y="OEE_pct", markers=True)
         
-        fig_line.update_traces(line_color="#10B981", line_width=3, marker=dict(size=8, color="#34D399"))
-        fig_line.add_hline(y=active_target, line_dash="dash", line_color="#EF4444", annotation_text=f"Target ({active_target:.1f}%)", annotation_position="bottom right")
-        fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"), xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="Tanggal"), height=380, margin=dict(l=10, r=10, t=30, b=10))
+        # Opsi format data harian
+        if selected_line == "Semua Line":
+            df_daily = df.groupby("Tgl")["OEE_pct"].mean().reset_index()
+        else:
+            df_daily = df_filtered.groupby("Tgl")["OEE_pct"].mean().reset_index()
+
+        # Konversi tanggal ke string agar sumbu X menampilkan setiap tanggal secara eksplisit
+        df_daily['Tgl_Str'] = df_daily['Tgl'].dt.strftime('%d %b %Y')
+
+        fig_line = go.Figure()
+
+        # Add Line Trace
+        fig_line.add_trace(go.Scatter(
+            x=df_daily['Tgl_Str'],
+            y=df_daily['OEE_pct'],
+            mode='lines+markers',
+            name='Aktual OEE',
+            line=dict(color='#10B981', width=3),
+            marker=dict(size=8, color='#34D399'),
+            text=[f"{val:.1f}%" for val in df_daily['OEE_pct']],
+            hoverinfo='x+text'
+        ))
+
+        # Add Horizontal Target Line sesuai active_target yang dinamis
+        fig_line.add_hline(
+            y=active_target,
+            line_dash="dash",
+            line_color="#EF4444",
+            line_width=2,
+            annotation_text=f"Target Line ({active_target:.1f}%)",
+            annotation_position="top right",
+            annotation_font=dict(color="#EF4444", size=12)
+        )
+
+        fig_line.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#9CA3AF'),
+            yaxis=dict(
+                gridcolor='rgba(255,255,255,0.05)',
+                title="OEE (%)",
+                range=[min(df_daily['OEE_pct'].min() - 5, active_target - 10), 105]
+            ),
+            xaxis=dict(
+                gridcolor='rgba(255,255,255,0.05)',
+                title="Tanggal Produksi",
+                type='category', # Memaksa Plotly menampilkan semua tanggal secara visual
+                tickangle=-45
+            ),
+            height=420,
+            margin=dict(l=10, r=10, t=30, b=80),
+            showlegend=False
+        )
+        
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # 6. AI ANALYSIS ENGINE
+        # 7. AI ANALYSIS ENGINE
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
         
         factor_details = {
@@ -412,5 +455,5 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 else:
     st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
 
-# 7. FOOTER COPYRIGHT
+# 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

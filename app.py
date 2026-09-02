@@ -433,4 +433,4 @@ else:
     st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
 
 # 8. FOOTER COPYRIGHT
-st.markdown('<div class="footer">copyright ardha dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

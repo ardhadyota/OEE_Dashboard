@@ -169,9 +169,7 @@ DEFAULT_TARGETS = {
 
 TARGET_OVERALL_DEFAULT = 94.0
 
-# ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR
-# ==========================================
+# Logo Sidebar
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_b64 = base64.b64encode(f.read()).decode()
@@ -193,8 +191,6 @@ else:
     st.sidebar.markdown("<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>", unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
-
-# Sidebar Control Center
 st.sidebar.markdown("<h3 style='color: #818CF8;'>Control Panel</h3>", unsafe_allow_html=True)
 uploaded_file = st.sidebar.file_uploader("Unggah Data Excel OEE", type=["xlsx", "xls"])
 
@@ -273,7 +269,7 @@ if uploaded_file is not None:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 4. CHART SECTION 1: COMPARISON AND EVALUATION
+        # 4. CHART SECTION 1
         col_left, col_right = st.columns([1, 1.2])
 
         with col_left:
@@ -306,7 +302,7 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # 5. CHART SECTION 2: PERBANDINGAN DAN TREN
+        # 5. CHART SECTION 2
         st.markdown('<div class="section-title">Perbandingan Target vs Pencapaian OEE Setiap Line</div>', unsafe_allow_html=True)
         df_line_oee = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index().sort_values(by="OEE_pct", ascending=False)
         df_melted = pd.melt(df_line_oee, id_vars=['LineID'], value_vars=['Target_Line', 'OEE_pct'], var_name='Kategori', value_name='Persentase')
@@ -331,7 +327,7 @@ if uploaded_file is not None:
         fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"), xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="Tanggal"), height=380, margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # 6. AI ANALYSIS ENGINE DIAGNOSIS DAN PRIORITAS
+        # 6. AI ANALYSIS ENGINE
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
         
         factor_details = {
@@ -367,7 +363,8 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
         with st.expander("Lihat Mentah Data Excel Detail"):
             st.dataframe(df_filtered, use_container_width=True)
-# 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE (STABLE & CONTAINER SAFE)
+
+        # 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE (STABLE & SAFE)
         if "chat_open" not in st.session_state: 
             st.session_state.chat_open = False
         
@@ -386,7 +383,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
         with st.expander("💬 Chat AI Assistant (OEE Advisor)", expanded=st.session_state.chat_open):
             st.markdown('<div class="wa-chat-marker"></div>', unsafe_allow_html=True)
             
-            # Tombol Topik Cepat
             st.caption("Pilihan Topik Cepat:")
             c_btn1, c_btn2 = st.columns(2)
             if c_btn1.button("💡 Solusi Perbaikan", use_container_width=True, key="btn_solusi"):
@@ -410,7 +406,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
             st.markdown("---")
             
-            # Form Input & Reset (Sangat Stabil dalam Expander)
             with st.form(key="chat_input_form", clear_on_submit=True):
                 txt_input = st.text_input("Tanya AI tentang OEE...", key="chat_text_box")
                 
@@ -423,7 +418,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                     st.session_state.chat_open = True
                     st.rerun()
 
-            # Memproses Prompt dari Form atau Tombol Cepat
             active_prompt = None
             if submit_btn and txt_input.strip():
                 active_prompt = txt_input.strip()
@@ -437,7 +431,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                 
                 p_lower = active_prompt.lower().strip()
                 
-                # Logika Respon Interaktif
                 if any(w in p_lower for w in ["halo", "hallo", "hai", "hi", "pagi", "siang", "sore", "malam", "tes", "ping"]):
                     response = f"Halo! Salam kenal. Saya siap membantu Anda menganalisis data OEE **{selected_line}**.\n\n" \
                                f"Saat ini OEE berada di angka **{avg_oee:.2f}%** (Target: {active_target:.1f}%). " \
@@ -491,10 +484,15 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.rerun()
 
-            # Riwayat Pesan
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]): 
                     st.markdown(message["content"])
-        
+
+    except Exception as e:
+        st.error(f"Gagal memproses file: {e}")
+
+else:
+    st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
+
 # 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

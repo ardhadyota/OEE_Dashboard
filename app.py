@@ -367,8 +367,9 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
         with st.expander("Lihat Mentah Data Excel Detail"):
             st.dataframe(df_filtered, use_container_width=True)
-# 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN TOMBOL RESET DAN RESPON ADAPTIF
-        if "chat_open" not in st.session_state: st.session_state.chat_open = False
+# 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE (STABLE & CONTAINER SAFE)
+        if "chat_open" not in st.session_state: 
+            st.session_state.chat_open = False
         
         def reset_chat_history():
             st.session_state.messages = [{
@@ -379,107 +380,121 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
         if "messages" not in st.session_state:
             reset_chat_history()
             
-        if "user_prompt" not in st.session_state: st.session_state.user_prompt = None
+        if "user_prompt" not in st.session_state: 
+            st.session_state.user_prompt = None
 
         with st.expander("💬 Chat AI Assistant (OEE Advisor)", expanded=st.session_state.chat_open):
             st.markdown('<div class="wa-chat-marker"></div>', unsafe_allow_html=True)
             
+            # Tombol Topik Cepat
             st.caption("Pilihan Topik Cepat:")
-            col_btn1, col_btn2 = st.columns(2)
-            if col_btn1.button("💡 Solusi Perbaikan", use_container_width=True):
-                st.session_state.user_prompt, st.session_state.chat_open = "Bagaimana solusi spesifik perbaikan OEE?", True
+            c_btn1, c_btn2 = st.columns(2)
+            if c_btn1.button("💡 Solusi Perbaikan", use_container_width=True, key="btn_solusi"):
+                st.session_state.user_prompt = "Bagaimana solusi spesifik perbaikan OEE?"
+                st.session_state.chat_open = True
                 st.rerun()
-            if col_btn2.button("⚠️ Line Bermasalah", use_container_width=True):
-                st.session_state.user_prompt, st.session_state.chat_open = "Line mana yang paling bermasalah?", True
+            if c_btn2.button("⚠️ Line Bermasalah", use_container_width=True, key="btn_line"):
+                st.session_state.user_prompt = "Line mana yang paling bermasalah?"
+                st.session_state.chat_open = True
                 st.rerun()
 
-            col_btn3, col_btn4 = st.columns(2)
-            if col_btn3.button("📊 Evaluasi Breakdown", use_container_width=True):
-                st.session_state.user_prompt, st.session_state.chat_open = "Bagaimana analisis Availability dan downtime?", True
+            c_btn3, c_btn4 = st.columns(2)
+            if c_btn3.button("📊 Evaluasi Breakdown", use_container_width=True, key="btn_down"):
+                st.session_state.user_prompt = "Bagaimana analisis Availability dan downtime?"
+                st.session_state.chat_open = True
                 st.rerun()
-            if col_btn4.button("📋 Ringkasan Status", use_container_width=True):
-                st.session_state.user_prompt, st.session_state.chat_open = "Berikan ringkasan performa saat ini.", True
+            if c_btn4.button("📋 Ringkasan Status", use_container_width=True, key="btn_summary"):
+                st.session_state.user_prompt = "Berikan ringkasan performa saat ini."
+                st.session_state.chat_open = True
                 st.rerun()
 
             st.markdown("---")
             
-            # Area Pesan
+            # Form Input & Reset (Sangat Stabil dalam Expander)
+            with st.form(key="chat_input_form", clear_on_submit=True):
+                txt_input = st.text_input("Tanya AI tentang OEE...", key="chat_text_box")
+                
+                col_sub1, col_sub2 = st.columns([3, 1])
+                submit_btn = col_sub1.form_submit_button(" Kirim", use_container_width=True)
+                reset_btn = col_sub2.form_submit_button("🔄 Reset", use_container_width=True)
+                
+                if reset_btn:
+                    reset_chat_history()
+                    st.session_state.chat_open = True
+                    st.rerun()
+
+            # Memproses Prompt dari Form atau Tombol Cepat
+            active_prompt = None
+            if submit_btn and txt_input.strip():
+                active_prompt = txt_input.strip()
+            elif st.session_state.user_prompt:
+                active_prompt = st.session_state.user_prompt
+                st.session_state.user_prompt = None
+
+            if active_prompt:
+                st.session_state.chat_open = True
+                st.session_state.messages.append({"role": "user", "content": active_prompt})
+                
+                p_lower = active_prompt.lower().strip()
+                
+                # Logika Respon Interaktif
+                if any(w in p_lower for w in ["halo", "hallo", "hai", "hi", "pagi", "siang", "sore", "malam", "tes", "ping"]):
+                    response = f"Halo! Salam kenal. Saya siap membantu Anda menganalisis data OEE **{selected_line}**.\n\n" \
+                               f"Saat ini OEE berada di angka **{avg_oee:.2f}%** (Target: {active_target:.1f}%). " \
+                               f"Silakan tanyakan kendala produksi, breakdown mesin, atau solusi perbaikannya!"
+
+                elif any(w in p_lower for w in ["solusi", "perbaikan", "cara", "saran", "tingkatkan", "rekomendasi"]):
+                    response = f"**Rekomendasi Utama ({selected_line}):**\n\n" \
+                               f"Fokus perbaikan terpenting ada pada indikator **{p1_name}** (Gap: {abs(p1_val['gap']):.2f}% di bawah standar).\n\n" \
+                               f"**Rencana Aksi:**\n" \
+                               f"1. **Tindakan Lapangan:** {p1_val['action']}\n" \
+                               f"2. **Target Perbaikan:** Tingkatkan {p1_name} dari {p1_val['actual']:.2f}% ke {p1_val['target']:.1f}%."
+
+                elif any(w in p_lower for w in ["availability", "downtime", "breakdown", "rusak", "macet", "henti"]):
+                    response = f"**Analisis Availability & Downtime ({selected_line}):**\n\n" \
+                               f"* **Aktual Availability:** {avg_avail:.2f}%\n" \
+                               f"* **Standar Minimal:** 90.0%\n" \
+                               f"* **Status:** {'✅ Memenuhi Standar' if avg_avail>=90 else '⚠️ Perlu Perhatian Khusus'}\n\n" \
+                               f"**Rekomendasi AI:** Kendalikan *unplanned downtime* dengan penjadwalan *preventive maintenance* dan percepat waktu *setup/changeover* mesin (SMED)."
+
+                elif any(w in p_lower for w in ["performance", "kecepatan", "lambat", "speed"]):
+                    response = f"**Analisis Performance Rate ({selected_line}):**\n\n" \
+                               f"* **Aktual Performance:** {avg_perf:.2f}%\n" \
+                               f"* **Standar Minimal:** 95.0%\n\n" \
+                               f"**Rekomendasi AI:** Evaluasi masalah *minor stoppages* dan pastikan *cycle time* ideal mesin terpenuhi."
+
+                elif any(w in p_lower for w in ["quality", "reject", "cacat", "defect", "rework"]):
+                    response = f"**Analisis Quality Rate ({selected_line}):**\n\n" \
+                               f"* **Aktual Quality:** {avg_qual:.2f}%\n" \
+                               f"* **Standar Minimal:** 99.0%\n\n" \
+                               f"**Rekomendasi AI:** Tingkatkan kontrol kualitas pada bahan baku awal serta perketat verifikasi parameter setting mesin."
+
+                elif any(w in p_lower for w in ["bermasalah", "rendah", "terburuk", "jelek", "parah", "krisis"]):
+                    worst_line = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct").iloc[0]
+                    response = f"**Line Dengan Efisiensi Paling Rendah:**\n\n" \
+                               f"🚨 **{worst_line['LineID']}** (Rata-rata OEE: **{worst_line['OEE_pct']:.2f}%**)\n\n" \
+                               f"Disarankan tim *engineering* memprioritaskan audit lapangan pada line tersebut."
+
+                elif any(w in p_lower for w in ["ringkasan", "status", "summary", "rangkum", "overview"]):
+                    response = f"**Ringkasan Performa Dashboard:**\n\n" \
+                               f"* **Line Terpilih:** {selected_line}\n" \
+                               f"* **Pencapaian OEE:** {avg_oee:.2f}% (Target: {active_target:.1f}%)\n" \
+                               f"* **Availability:** {avg_avail:.2f}%\n" \
+                               f"* **Performance:** {avg_perf:.2f}%\n" \
+                               f"* **Quality:** {avg_qual:.2f}%\n\n" \
+                               f"Prioritas perbaikan utama: **{p1_name}**."
+                else:
+                    response = f"Saya mengerti Anda menanyakan tentang *\"{active_prompt}\"*\n\n" \
+                               f"Pada **{selected_line}**, OEE berada di angka **{avg_oee:.2f}%**. " \
+                               f"Coba tanyakan kata kunci seperti **solusi**, **downtime**, **speed**, **reject**, atau **line terburuk**."
+
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.rerun()
+
+            # Riwayat Pesan
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]): 
                     st.markdown(message["content"])
-
-            # Input Chat
-            active_prompt = st.chat_input("Tanya AI tentang OEE...") or st.session_state.user_prompt
-            if active_prompt:
-                st.session_state.chat_open, st.session_state.user_prompt = True, None
-                st.session_state.messages.append({"role": "user", "content": active_prompt})
-                with st.chat_message("user"): 
-                    st.markdown(active_prompt)
-
-                with st.chat_message("assistant"):
-                    p_lower = active_prompt.lower().strip()
-                    
-                    # Logika Respon Interaktif Komprehensif
-                    if any(w in p_lower for w in ["halo", "hallo", "hai", "hi", "pagi", "siang", "sore", "malam", "tes", "ping"]):
-                        response = f"Halo! Salam kenal. Saya siap membantu Anda menganalisis data OEE **{selected_line}**.\n\n" \
-                                   f"Saat ini OEE berada di angka **{avg_oee:.2f}%** (Target: {active_target:.1f}%). " \
-                                   f"Silakan tanyakan kendala produksi, breakdown mesin, atau solusi perbaikannya!"
-
-                    elif any(w in p_lower for w in ["solusi", "perbaikan", "cara", "saran", "tingkatkan", "rekomendasi"]):
-                        response = f"**Rekomendasi Utama ({selected_line}):**\n\n" \
-                                   f"Fokus perbaikan terpenting ada pada indikator **{p1_name}** (Gap: {abs(p1_val['gap']):.2f}% di bawah standar).\n\n" \
-                                   f"**Rencana Aksi:**\n" \
-                                   f"1. **Tindakan Lapangan:** {p1_val['action']}\n" \
-                                   f"2. **Target Perbaikan:** Tingkatkan {p1_name} dari {p1_val['actual']:.2f}% ke {p1_val['target']:.1f}%.\n\n" \
-                                   f"Apakah Anda ingin mendiskusikan langkah teknis untuk indikator lainnya?"
-
-                    elif any(w in p_lower for w in ["availability", "downtime", "breakdown", "rusak", "macet", "henti"]):
-                        response = f"**Analisis Availability & Downtime ({selected_line}):**\n\n" \
-                                   f"* **Aktual Availability:** {avg_avail:.2f}%\n" \
-                                   f"* **Standar Minimal:** 90.0%\n" \
-                                   f"* **Status:** {'✅ Memenuhi Standar' if avg_avail>=90 else '⚠️ Perlu Perhatian Khusus'}\n\n" \
-                                   f"**Rekomendasi AI:** Kendalikan *unplanned downtime* dengan penjadwalan *preventive maintenance* dan percepat waktu *setup/changeover* mesin (SMED)."
-
-                    elif any(w in p_lower for w in ["performance", "kecepatan", "lambat", "speed"]):
-                        response = f"**Analisis Performance Rate ({selected_line}):**\n\n" \
-                                   f"* **Aktual Performance:** {avg_perf:.2f}%\n" \
-                                   f"* **Standar Minimal:** 95.0%\n\n" \
-                                   f"**Rekomendasi AI:** Evaluasi masalah *minor stoppages* (mesin sering berhenti singkat) dan pastikan *cycle time* ideal mesin terpenuhi tanpa menurunkan batas aman operasional."
-
-                    elif any(w in p_lower for w in ["quality", "reject", "cacat", "defect", "rework"]):
-                        response = f"**Analisis Quality Rate ({selected_line}):**\n\n" \
-                                   f"* **Aktual Quality:** {avg_qual:.2f}%\n" \
-                                   f"* **Standar Minimal:** 99.0%\n\n" \
-                                   f"**Rekomendasi AI:** Tingkatkan kontrol kualitas pada bahan baku awal (*incoming inspection*) serta perketat verifikasi parameter setting awal produksi."
-
-                    elif any(w in p_lower for w in ["bermasalah", "rendah", "terburuk", "jelek", "parah", "krisis"]):
-                        worst_line = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct").iloc[0]
-                        response = f"**Line Dengan Efisiensi Paling Rendah:**\n\n" \
-                                   f"🚨 **{worst_line['LineID']}** (Rata-rata OEE: **{worst_line['OEE_pct']:.2f}%**)\n\n" \
-                                   f"Disarankan agar *engineering team* memprioritaskan audit lapangan pada line tersebut."
-
-                    elif any(w in p_lower for w in ["ringkasan", "status", "summary", "rangkum", "overview", "laporan"]):
-                        response = f"**Ringkasan Performa Dashboard:**\n\n" \
-                                   f"* **Line Terpilih:** {selected_line}\n" \
-                                   f"* **Pencapaian OEE:** {avg_oee:.2f}% (Target: {active_target:.1f}%)\n" \
-                                   f"* **Availability:** {avg_avail:.2f}%\n" \
-                                   f"* **Performance:** {avg_perf:.2f}%\n" \
-                                   f"* **Quality:** {avg_qual:.2f}%\n\n" \
-                                   f"Prioritas utama perbaikan difokuskan pada **{p1_name}**."
-                    else:
-                        response = f"Saya mengerti Anda menanyakan tentang *\"{active_prompt}\"*\n\n" \
-                                   f"Pada **{selected_line}**, performa OEE tercatat sebesar **{avg_oee:.2f}%**. " \
-                                   f"Coba tanyakan dengan kata kunci seperti **solusi**, **downtime**, **speed**, **reject**, atau **line terburuk** untuk analisis lebih mendalam."
-
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-
-            # Tombol Reset Chat Selalu Terlihat di Bagian Bawah
-            st.markdown("---")
-            if st.button("🔄 Reset / Kembalikan Chat ke Awal", use_container_width=True):
-                reset_chat_history()
-                st.session_state.chat_open = True
-                st.rerun()
         
 # 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

@@ -177,13 +177,12 @@ DEFAULT_TARGETS = {
 TARGET_OVERALL_DEFAULT = 94.0
 
 # ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR
+# MENAMPILKAN LOGO DI SIDEBAR (UKURAN RAPI/KECIL)
 # ==========================================
 if os.path.exists("logo.png"):
-    # Membungkus logo dengan background putih agar kontras dengan tema gelap
-    st.sidebar.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.sidebar.image("logo.png", use_container_width=True)
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.sidebar.columns([1, 2, 1])
+    with col2:
+        st.image("logo.png", width=130)
 else:
     st.sidebar.markdown("<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>", unsafe_allow_html=True)
 

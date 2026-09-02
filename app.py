@@ -57,22 +57,22 @@ def load_or_init_monthly_summary():
 
 # 3. KAMUS TARGET SPESIFIK
 LINE_STANDARDS = {
-    "BTP":        {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
-    "BTP MIX":    {"avail": 98.0, "perf": 99.0, "qual": 100.00, "oee": 96.74},
-    "DFOAM 1":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
-    "DFOAM 2":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
-    "DFOAM 3":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
-    "DFOAM 4":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
-    "PP NOU":    {"avail": 80.0, "perf": 100.0, "qual": 100.00, "oee": 80.00},
-    "PP PUNCH":  {"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
-    "PP PUNCH 1":{"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
-    "PVC 1":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
-    "PVC 2":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
-    "SMS 1":     {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
-    "SMS 2":     {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
-    "STF EXT 1": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
-    "STF EXT 2": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
-    "STF MIX":   {"avail": 92.0, "perf": 100.0, "qual": 100.00, "oee": 92.00},
+    "BTP MIXING":        {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
+    "BUTYL TAPE LINE 1":    {"avail": 98.0, "perf": 99.0, "qual": 100.00, "oee": 96.74},
+    "DFOAM ASSY 1":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
+    "DFOAM ASSY 2":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
+    "DFOAM ASSY 3":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
+    "DFOAM ASSY 4":   {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
+    "PAD PILLAR NOUTONG":    {"avail": 80.0, "perf": 100.0, "qual": 100.00, "oee": 80.00},
+    "STF PUNCHING":  {"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
+    "STF PUNCHING 1":{"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
+    "PVC LINE MC 1":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
+    "PVC LINE MC 2":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
+    "SPOT MASTIC MIX. 1":     {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
+    "SPOT MASTIC MIX. 2":     {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
+    "STF EXTRUDING SHIFT 1": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
+    "STF EXTRUDING SHIFT 2": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
+    "STF MIXING ":   {"avail": 92.0, "perf": 100.0, "qual": 100.00, "oee": 92.00},
 }
 
 DEFAULT_OVERALL_STD = {"avail": 90.0, "perf": 95.0, "qual": 99.0, "oee": 94.00}

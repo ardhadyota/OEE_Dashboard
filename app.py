@@ -170,7 +170,7 @@ DEFAULT_TARGETS = {
 TARGET_OVERALL_DEFAULT = 94.0
 
 # ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR (BASE64 FIXED SIZE)
+# MENAMPILKAN LOGO DI SIDEBAR
 # ==========================================
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
@@ -182,7 +182,7 @@ if os.path.exists("logo.png"):
             padding: 10px;
             border-radius: 12px;
             text-align: center;
-            width: 130px;
+            width: 140px;
             margin: 10px auto 20px auto;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         ">
@@ -368,10 +368,9 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
         with st.expander("Lihat Mentah Data Excel Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
-# 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN RESET & FLEKSIBILITAS
+        # 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN RESET & FLEKSIBILITAS
         if "chat_open" not in st.session_state: st.session_state.chat_open = False
         
-        # Fungsi reset chat ke tampilan awal
         def reset_chat_history():
             st.session_state.messages = [{
                 "role": "assistant", 
@@ -386,7 +385,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
         with st.expander("💬 Chat AI Assistant (OEE Advisor)", expanded=st.session_state.chat_open):
             st.markdown('<div class="wa-chat-marker"></div>', unsafe_allow_html=True)
             
-            # Header Chat dengan Tombol Reset & Tutup
             col_head1, col_head2 = st.columns([1, 1])
             with col_head1:
                 if st.button("🔄 Reset Chat", use_container_width=True):
@@ -416,27 +414,20 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                 st.rerun()
 
             st.markdown("---")
-            
-            # Menampilkan Riwayat Chat
             for message in st.session_state.messages:
-                with st.chat_message(message["role"]): 
-                    st.markdown(message["content"])
+                with st.chat_message(message["role"]): st.markdown(message["content"])
 
-            # Input Chat Interaktif
             active_prompt = st.chat_input("Tanya AI tentang OEE...") or st.session_state.user_prompt
             if active_prompt:
                 st.session_state.chat_open, st.session_state.user_prompt = True, None
                 st.session_state.messages.append({"role": "user", "content": active_prompt})
-                with st.chat_message("user"): 
-                    st.markdown(active_prompt)
+                with st.chat_message("user"): st.markdown(active_prompt)
 
                 with st.chat_message("assistant"):
                     p_lower = active_prompt.lower()
-                    
-                    # Logika Interaktif Dinamis berdasarkan Data Real-time
                     if any(w in p_lower for w in ["solusi", "perbaikan", "cara", "saran", "tingkatkan"]):
                         response = f"**Rekomendasi Perbaikan untuk {selected_line}:**\n\n" \
-                                   f" Poin kritis utama ada di pilar **{p1_name}** (Gap: {abs(p1_val['gap']):.2f}%).\n\n" \
+                                   f"Fokus utama ada pada pilar **{p1_name}** (Gap: {abs(p1_val['gap']):.2f}%).\n\n" \
                                    f"**Langkah Aksi Interaktif:**\n" \
                                    f"1. **Tindakan Lapangan:** {p1_val['action']}\n" \
                                    f"2. **Target Singkat:** Naikkan {p1_name} dari {p1_val['actual']:.2f}% ke {p1_val['target']:.1f}%.\n" \
@@ -446,9 +437,9 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                         response = f"**Analisis Availability & Downtime ({selected_line}):**\n\n" \
                                    f"* **Aktual Availability:** {avg_avail:.2f}%\n" \
                                    f"* **Standar Target:** 90.0%\n" \
-                                   f"* **Status:** {'Di atas standar' if avg_avail>=90 else 'Di bawah standar (butuh tindakan)'}\n\n" \
-                                   f"**Faktor Penyebab:** Terjadi kerugian waktu akibat pencatatan *unplanned breakdown* dan durasi *changeover*.\n" \
-                                   f"**Saran:** Terapkan teknik SMED (*Single Minute Exchange of Die*) pada tim operasional."
+                                   f"* **Status:** {'Di atas standar' if avg_avail>=90 else 'Di bawah standar'}\n\n" \
+                                   f"**Faktor Penyebab:** Terjadi kerugian waktu akibat pencatatan unplanned breakdown dan durasi changeover.\n" \
+                                   f"**Saran:** Terapkan teknik SMED (Single Minute Exchange of Die) pada tim operasional."
 
                     elif any(w in p_lower for w in ["bermasalah", "rendah", "terburuk", "jelek", "parah"]):
                         worst_line = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct").iloc[0]
@@ -468,9 +459,16 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                         response = f"**OEE Assistant Response:**\n\n" \
                                    f"Saya menganalisis pertanyaan Anda terkait: *\"{active_prompt}\"*\n\n" \
                                    f"Pada **{selected_line}**, performa OEE saat ini berada di angka **{avg_oee:.2f}%**. " \
-                                   f"Anda bisa menanyakan detail *Availability*, *Performance*, *Quality*, atau meminta saran perbaikan."
+                                   f"Anda bisa menanyakan detail Availability, Performance, Quality, atau meminta saran perbaikan."
 
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    except Exception as e:
+        st.error(f"Gagal memproses file: {e}")
+
+else:
+    st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
+
 # 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

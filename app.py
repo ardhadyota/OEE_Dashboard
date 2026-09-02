@@ -280,14 +280,48 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # 5. CHART SECTION 2
+        # 5. CHART SECTION 2: BATANG AKTUAL + GARIS TARGET (COMBO CHART)
         st.markdown('<div class="section-title">Perbandingan Target vs Pencapaian OEE Setiap Line</div>', unsafe_allow_html=True)
+        
         df_line_oee = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index().sort_values(by="OEE_pct", ascending=False)
-        df_melted = pd.melt(df_line_oee, id_vars=['LineID'], value_vars=['Target_Line', 'OEE_pct'], var_name='Kategori', value_name='Persentase')
-        df_melted['Kategori'] = df_melted['Kategori'].map({'Target_Line': 'Target Line', 'OEE_pct': 'Aktual OEE'})
-        fig_bar_compare = px.bar(df_melted, x="LineID", y="Persentase", color="Kategori", barmode="group", text="Persentase", color_discrete_map={"Target Line": "#6366F1", "Aktual OEE": "#38BDF8"}, category_orders={"Kategori": ["Target Line", "Aktual OEE"]})
-        fig_bar_compare.update_traces(texttemplate='%{text:.1f}%', textposition='outside', marker_line_width=0)
-        fig_bar_compare.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title=""), xaxis=dict(title="", tickangle=-45), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""), height=420, margin=dict(l=10, r=10, t=10, b=80))
+        
+        # Penentuan Warna Batang Berdasarkan Pencapaian Target
+        colors = ['#10B981' if oee >= tgt else '#EF4444' for oee, tgt in zip(df_line_oee['OEE_pct'], df_line_oee['Target_Line'])]
+        
+        fig_bar_compare = go.Figure()
+
+        # 1. Grafik Batang untuk Aktual OEE
+        fig_bar_compare.add_trace(go.Bar(
+            x=df_line_oee['LineID'],
+            y=df_line_oee['OEE_pct'],
+            name='Aktual OEE',
+            marker_color=colors,
+            text=[f"{val:.1f}%" for val in df_line_oee['OEE_pct']],
+            textposition='outside'
+        ))
+
+        # 2. Grafik Garis untuk Target Line
+        fig_bar_compare.add_trace(go.Scatter(
+            x=df_line_oee['LineID'],
+            y=df_line_oee['Target_Line'],
+            name='Target Line',
+            mode='lines+markers',
+            line=dict(color='#6366F1', width=3, dash='dash'),
+            marker=dict(size=8, color='#818CF8'),
+            text=[f"{val:.1f}%" for val in df_line_oee['Target_Line']],
+            textposition='top center'
+        ))
+
+        fig_bar_compare.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#9CA3AF'),
+            yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"),
+            xaxis=dict(title="", tickangle=-45),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""),
+            height=430,
+            margin=dict(l=10, r=10, t=20, b=80)
+        )
         st.plotly_chart(fig_bar_compare, use_container_width=True)
 
         st.markdown("---")

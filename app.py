@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import os
 
 # 1. KONFIGURASI HALAMAN DAN CUSTOM CSS
 st.set_page_config(
-    page_title="OEE Executive Analytics",
+    page_title="OEE Executive Analytics - PT. ARGAPURA",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -63,17 +64,40 @@ st.markdown("""
         border-radius: 14px;
         border: 1px solid rgba(99, 102, 241, 0.2);
         margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
     }
-    .dashboard-header h1 {
+    .dashboard-header-left h1 {
         color: #FFFFFF;
         font-size: 1.8rem;
         font-weight: 700;
         margin: 0;
     }
-    .dashboard-header p {
+    .dashboard-header-left p {
         color: #94A3B8;
         margin: 4px 0 0 0;
         font-size: 0.95rem;
+    }
+    .dashboard-header-right {
+        text-align: right;
+        border-left: 2px solid rgba(255, 255, 255, 0.1);
+        padding-left: 20px;
+    }
+    .dashboard-header-right h3 {
+        color: #38BDF8;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+    .dashboard-header-right p {
+        color: #94A3B8;
+        margin: 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 2px;
     }
 
     /* Section Header */
@@ -86,13 +110,6 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 8px;
-    }
-
-    /* Dataframe Table Custom Styling */
-    div[data-testid="stDataFrame"] {
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     /* Floating WhatsApp style Chat Window */
@@ -109,8 +126,6 @@ st.markdown("""
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
         overflow: hidden;
     }
-
-    /* Chat Header Style */
     div[data-testid="stExpander"]:has(.wa-chat-marker) summary {
         background-color: #075E54 !important;
         color: #FFFFFF !important;
@@ -127,6 +142,14 @@ st.markdown("""
         padding: 20px 0 10px 0;
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         margin-top: 40px;
+    }
+    
+    /* Image background support for transparent logos */
+    .logo-container {
+        background-color: white;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -152,6 +175,19 @@ DEFAULT_TARGETS = {
 }
 
 TARGET_OVERALL_DEFAULT = 94.0
+
+# ==========================================
+# MENAMPILKAN LOGO DI SIDEBAR
+# ==========================================
+if os.path.exists("logo.png"):
+    # Membungkus logo dengan background putih agar kontras dengan tema gelap
+    st.sidebar.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.sidebar.image("logo.png", use_container_width=True)
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
+else:
+    st.sidebar.markdown("<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>", unsafe_allow_html=True)
+
+st.sidebar.markdown("---")
 
 # Sidebar Control Center
 st.sidebar.markdown("<h3 style='color: #818CF8;'>Control Panel</h3>", unsafe_allow_html=True)
@@ -197,8 +233,14 @@ if uploaded_file is not None:
         # 3. HEADER DAN SUMMARY METRICS
         st.markdown("""
             <div class="dashboard-header">
-                <h1>OEE Analytics & Performance Dashboard</h1>
-                <p>Monitoring Efisiensi Mesin, Analisis Gap Target, dan Evaluasi Indikator Produksi</p>
+                <div class="dashboard-header-left">
+                    <h1>OEE Analytics & Performance Dashboard</h1>
+                    <p>Monitoring Efisiensi Mesin, Analisis Gap Target, dan Evaluasi Indikator Produksi</p>
+                </div>
+                <div class="dashboard-header-right">
+                    <h3>PT. ARGAPURA</h3>
+                    <p>ESTABLISHED 1954</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -207,9 +249,7 @@ if uploaded_file is not None:
         avg_perf = df_filtered['Perf_pct'].mean()
         avg_qual = df_filtered['Qual_pct'].mean()
 
-        # Target acuan standar industri
         STD_AVAIL, STD_PERF, STD_QUAL = 90.0, 95.0, 99.0
-
         diff_oee = avg_oee - active_target
         diff_avail = avg_avail - STD_AVAIL
         diff_perf = avg_perf - STD_PERF
@@ -221,38 +261,10 @@ if uploaded_file is not None:
             return f'<span class="metric-badge badge-danger">{diff:.2f}% vs {target_text}</span>'
 
         c1, c2, c3, c4 = st.columns(4)
-        
-        c1.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">Overall OEE</div>
-                <div class="metric-value">{avg_oee:.2f}%</div>
-                {get_badge_html(diff_oee, f"Target {active_target:.1f}%")}
-            </div>
-        """, unsafe_allow_html=True)
-
-        c2.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">Availability</div>
-                <div class="metric-value">{avg_avail:.2f}%</div>
-                {get_badge_html(diff_avail, "Std 90%")}
-            </div>
-        """, unsafe_allow_html=True)
-
-        c3.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">Performance</div>
-                <div class="metric-value">{avg_perf:.2f}%</div>
-                {get_badge_html(diff_perf, "Std 95%")}
-            </div>
-        """, unsafe_allow_html=True)
-
-        c4.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">Quality Rate</div>
-                <div class="metric-value">{avg_qual:.2f}%</div>
-                {get_badge_html(diff_qual, "Std 99%")}
-            </div>
-        """, unsafe_allow_html=True)
+        c1.markdown(f'<div class="metric-card"><div class="metric-title">Overall OEE</div><div class="metric-value">{avg_oee:.2f}%</div>{get_badge_html(diff_oee, f"Target {active_target:.1f}%")}</div>', unsafe_allow_html=True)
+        c2.markdown(f'<div class="metric-card"><div class="metric-title">Availability</div><div class="metric-value">{avg_avail:.2f}%</div>{get_badge_html(diff_avail, "Std 90%")}</div>', unsafe_allow_html=True)
+        c3.markdown(f'<div class="metric-card"><div class="metric-title">Performance</div><div class="metric-value">{avg_perf:.2f}%</div>{get_badge_html(diff_perf, "Std 95%")}</div>', unsafe_allow_html=True)
+        c4.markdown(f'<div class="metric-card"><div class="metric-title">Quality Rate</div><div class="metric-value">{avg_qual:.2f}%</div>{get_badge_html(diff_qual, "Std 99%")}</div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -261,70 +273,25 @@ if uploaded_file is not None:
 
         with col_left:
             st.markdown('<div class="section-title">Benchmark Overall Target vs Aktual</div>', unsafe_allow_html=True)
-            
-            df_overall_comp = pd.DataFrame({
-                "Kategori": ["Target Rata-Rata", "Aktual OEE"],
-                "Nilai": [TARGET_OVERALL_DEFAULT, overall_avg_oee]
-            })
-
+            df_overall_comp = pd.DataFrame({"Kategori": ["Target Rata-Rata", "Aktual OEE"], "Nilai": [TARGET_OVERALL_DEFAULT, overall_avg_oee]})
             fig_overall = px.bar(
-                df_overall_comp,
-                x="Kategori",
-                y="Nilai",
-                text="Nilai",
-                color="Kategori",
-                color_discrete_map={
-                    "Target Rata-Rata": "#3B82F6", 
-                    "Aktual OEE": "#10B981" if overall_avg_oee >= TARGET_OVERALL_DEFAULT else "#EF4444"
-                }
+                df_overall_comp, x="Kategori", y="Nilai", text="Nilai", color="Kategori",
+                color_discrete_map={"Target Rata-Rata": "#3B82F6", "Aktual OEE": "#10B981" if overall_avg_oee >= TARGET_OVERALL_DEFAULT else "#EF4444"}
             )
             fig_overall.update_traces(texttemplate='%{text:.2f}%', textposition='outside', marker_line_width=0)
-            fig_overall.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#9CA3AF'),
-                yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title=""),
-                xaxis=dict(title=""),
-                showlegend=False,
-                height=340,
-                margin=dict(l=10, r=10, t=30, b=10)
-            )
+            fig_overall.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title=""), xaxis=dict(title=""), showlegend=False, height=340, margin=dict(l=10, r=10, t=30, b=10))
             st.plotly_chart(fig_overall, use_container_width=True)
 
         with col_right:
             st.markdown('<div class="section-title">Daftar Line di Bawah Target Urut Gap</div>', unsafe_allow_html=True)
-            
             if selected_line != "Semua Line":
                 if avg_oee < active_target:
                     st.error(f"Line {selected_line} tidak mencapai target. Kekurangan: {(active_target - avg_oee):.2f} percent.")
                 else:
                     st.success(f"Line {selected_line} berhasil memenuhi atau melampaui target yang ditentukan.")
             else:
-                line_summary = df.groupby("LineID").agg({
-                    'OEE_pct': 'mean',
-                    'Target_Line': 'first',
-                    'Avail_pct': 'mean',
-                    'Perf_pct': 'mean',
-                    'Qual_pct': 'mean'
-                }).reset_index()
-
-                problem_list = []
-                for idx, row in line_summary.iterrows():
-                    target_l = row['Target_Line']
-                    oee_l = row['OEE_pct']
-                    gap = target_l - oee_l
-                    if gap > 0:
-                        problem_list.append({
-                            "Nama Line": row['LineID'],
-                            "Target": f"{target_l:.1f}%",
-                            "Aktual OEE": f"{oee_l:.2f}%",
-                            "Gap": gap,
-                            "Kekurangan": f"-{gap:.2f}%",
-                            "Availability": f"{row['Avail_pct']:.1f}%",
-                            "Performance": f"{row['Perf_pct']:.1f}%",
-                            "Quality": f"{row['Qual_pct']:.1f}%"
-                        })
-
+                line_summary = df.groupby("LineID").agg({'OEE_pct': 'mean', 'Target_Line': 'first', 'Avail_pct': 'mean', 'Perf_pct': 'mean', 'Qual_pct': 'mean'}).reset_index()
+                problem_list = [{"Nama Line": row['LineID'], "Target": f"{row['Target_Line']:.1f}%", "Aktual OEE": f"{row['OEE_pct']:.2f}%", "Gap": row['Target_Line'] - row['OEE_pct'], "Kekurangan": f"-{(row['Target_Line'] - row['OEE_pct']):.2f}%", "Availability": f"{row['Avail_pct']:.1f}%", "Performance": f"{row['Perf_pct']:.1f}%", "Quality": f"{row['Qual_pct']:.1f}%"} for idx, row in line_summary.iterrows() if row['Target_Line'] - row['OEE_pct'] > 0]
                 if problem_list:
                     df_problems = pd.DataFrame(problem_list).sort_values(by="Gap", ascending=False).drop(columns=["Gap"])
                     df_problems.index = range(1, len(df_problems) + 1)
@@ -336,107 +303,39 @@ if uploaded_file is not None:
 
         # 5. CHART SECTION 2: PERBANDINGAN DAN TREN
         st.markdown('<div class="section-title">Perbandingan Target vs Pencapaian OEE Setiap Line</div>', unsafe_allow_html=True)
-        
-        df_line_oee = df.groupby("LineID").agg({
-            'Target_Line': 'first',
-            'OEE_pct': 'mean'
-        }).reset_index().sort_values(by="OEE_pct", ascending=False)
-        
-        df_melted = pd.melt(
-            df_line_oee, 
-            id_vars=['LineID'], 
-            value_vars=['Target_Line', 'OEE_pct'],
-            var_name='Kategori', 
-            value_name='Persentase'
-        )
+        df_line_oee = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index().sort_values(by="OEE_pct", ascending=False)
+        df_melted = pd.melt(df_line_oee, id_vars=['LineID'], value_vars=['Target_Line', 'OEE_pct'], var_name='Kategori', value_name='Persentase')
         df_melted['Kategori'] = df_melted['Kategori'].map({'Target_Line': 'Target Line', 'OEE_pct': 'Aktual OEE'})
-
-        fig_bar_compare = px.bar(
-            df_melted,
-            x="LineID",
-            y="Persentase",
-            color="Kategori",
-            barmode="group",
-            text="Persentase",
-            color_discrete_map={"Target Line": "#6366F1", "Aktual OEE": "#38BDF8"},
-            category_orders={"Kategori": ["Target Line", "Aktual OEE"]}
-        )
+        fig_bar_compare = px.bar(df_melted, x="LineID", y="Persentase", color="Kategori", barmode="group", text="Persentase", color_discrete_map={"Target Line": "#6366F1", "Aktual OEE": "#38BDF8"}, category_orders={"Kategori": ["Target Line", "Aktual OEE"]})
         fig_bar_compare.update_traces(texttemplate='%{text:.1f}%', textposition='outside', marker_line_width=0)
-        fig_bar_compare.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#9CA3AF'),
-            yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title=""),
-            xaxis=dict(title="", tickangle=-45),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""),
-            height=420,
-            margin=dict(l=10, r=10, t=10, b=80)
-        )
+        fig_bar_compare.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title=""), xaxis=dict(title="", tickangle=-45), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""), height=420, margin=dict(l=10, r=10, t=10, b=80))
         st.plotly_chart(fig_bar_compare, use_container_width=True)
 
         st.markdown("---")
 
         # Tren Pergerakan Harian
         st.markdown(f'<div class="section-title">Tren Pergerakan OEE Harian Line {selected_line}</div>', unsafe_allow_html=True)
-        
         if selected_line == "Semua Line":
             df_daily_trend = df.groupby("Tgl")["OEE_pct"].mean().reset_index()
             fig_line = px.line(df_daily_trend, x="Tgl", y="OEE_pct", markers=True)
         else:
             fig_line = px.line(df_filtered, x="Tgl", y="OEE_pct", markers=True)
-
+        
         fig_line.update_traces(line_color="#10B981", line_width=3, marker=dict(size=8, color="#34D399"))
-        fig_line.add_hline(
-            y=active_target, 
-            line_dash="dash", 
-            line_color="#EF4444", 
-            annotation_text=f"Target ({active_target:.1f}%)",
-            annotation_position="bottom right"
-        )
-        fig_line.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#9CA3AF'),
-            yaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"),
-            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="Tanggal"),
-            height=380,
-            margin=dict(l=10, r=10, t=30, b=10)
-        )
+        fig_line.add_hline(y=active_target, line_dash="dash", line_color="#EF4444", annotation_text=f"Target ({active_target:.1f}%)", annotation_position="bottom right")
+        fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"), xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="Tanggal"), height=380, margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_line, use_container_width=True)
 
         # 6. AI ANALYSIS ENGINE DIAGNOSIS DAN PRIORITAS
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
         
-        gap_avail = STD_AVAIL - avg_avail
-        gap_perf = STD_PERF - avg_perf
-        gap_qual = STD_QUAL - avg_qual
-
         factor_details = {
-            "Availability": {
-                "gap": gap_avail,
-                "actual": avg_avail,
-                "target": STD_AVAIL,
-                "loss_type": "Downtime Losses Breakdown dan Setup",
-                "action": "Percepat waktu pergantian cetakan SMED dan kurangi waktu mesin mati akibat kerusakan unplanned breakdown."
-            },
-            "Performance": {
-                "gap": gap_perf,
-                "actual": avg_perf,
-                "target": STD_PERF,
-                "loss_type": "Speed Losses dan Micro Stoppages",
-                "action": "Analisis penyebab penurunan kecepatan operasional mesin, kurangi henti singkat minor stops, serta kalibrasi siklus standar."
-            },
-            "Quality": {
-                "gap": gap_qual,
-                "actual": avg_qual,
-                "target": STD_QUAL,
-                "loss_type": "Defect Losses Reject dan Rework",
-                "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."
-            }
+            "Availability": {"gap": STD_AVAIL - avg_avail, "actual": avg_avail, "target": STD_AVAIL, "loss_type": "Downtime Losses Breakdown dan Setup", "action": "Percepat waktu pergantian cetakan SMED dan kurangi waktu mesin mati akibat kerusakan unplanned breakdown."},
+            "Performance": {"gap": STD_PERF - avg_perf, "actual": avg_perf, "target": STD_PERF, "loss_type": "Speed Losses dan Micro Stoppages", "action": "Analisis penyebab penurunan kecepatan operasional mesin, kurangi henti singkat minor stops, serta kalibrasi siklus standar."},
+            "Quality": {"gap": STD_QUAL - avg_qual, "actual": avg_qual, "target": STD_QUAL, "loss_type": "Defect Losses Reject dan Rework", "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."}
         }
 
         sorted_factors = sorted(factor_details.items(), key=lambda item: item[1]["gap"], reverse=True)
-
         p1_name, p1_val = sorted_factors[0]
         p2_name, p2_val = sorted_factors[1]
         p3_name, p3_val = sorted_factors[2]
@@ -461,23 +360,14 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
         st.info(f"Catatan Sistem: Menyelesaikan permasalahan pada Prioritas 1 ({p1_name}) akan memberikan dampak kenaikan OEE yang paling signifikan terhadap total produktivitas.")
 
-        # Expandable Data Table
         with st.expander("Lihat Mentah Data Excel Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
         # 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN DYNAMIC TOGGLE
-        if "chat_open" not in st.session_state:
-            st.session_state.chat_open = False
-
+        if "chat_open" not in st.session_state: st.session_state.chat_open = False
         if "messages" not in st.session_state:
-            st.session_state.messages = [
-                {
-                    "role": "assistant",
-                    "content": f"Halo! Saya AI OEE Advisor. Saat ini kita sedang meninjau Line {selected_line} dengan OEE {avg_oee:.2f}%.\n\nSilakan pilih topik di bawah ini atau ketik pertanyaan Anda sendiri!"
-                }
-            ]
-        if "user_prompt" not in st.session_state:
-            st.session_state.user_prompt = None
+            st.session_state.messages = [{"role": "assistant", "content": f"Halo! Saya AI OEE Advisor PT. ARGAPURA. Saat ini kita sedang meninjau Line {selected_line} dengan OEE {avg_oee:.2f}%.\n\nSilakan pilih topik di bawah ini atau ketik pertanyaan Anda sendiri!"}]
+        if "user_prompt" not in st.session_state: st.session_state.user_prompt = None
 
         with st.expander("Chat AI Assistant (OEE Advisor)", expanded=st.session_state.chat_open):
             st.markdown('<div class="wa-chat-marker"></div>', unsafe_allow_html=True)
@@ -490,65 +380,44 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
             st.caption("Saran Pertanyaan Cepat:")
             col_btn1, col_btn2 = st.columns(2)
-            
             if col_btn1.button("Solusi Perbaikan", use_container_width=True):
-                st.session_state.user_prompt = "Bagaimana solusi spesifik perbaikan OEE?"
-                st.session_state.chat_open = True
+                st.session_state.user_prompt, st.session_state.chat_open = "Bagaimana solusi spesifik perbaikan OEE?", True
                 st.rerun()
-
             if col_btn2.button("Line Bermasalah", use_container_width=True):
-                st.session_state.user_prompt = "Line mana yang paling bermasalah?"
-                st.session_state.chat_open = True
+                st.session_state.user_prompt, st.session_state.chat_open = "Line mana yang paling bermasalah?", True
                 st.rerun()
 
             col_btn3, col_btn4 = st.columns(2)
             if col_btn3.button("Evaluasi Breakdown", use_container_width=True):
-                st.session_state.user_prompt = "Bagaimana analisis Availability dan downtime?"
-                st.session_state.chat_open = True
+                st.session_state.user_prompt, st.session_state.chat_open = "Bagaimana analisis Availability dan downtime?", True
                 st.rerun()
-
             if col_btn4.button("Ringkasan Status", use_container_width=True):
-                st.session_state.user_prompt = "Berikan ringkasan performa saat ini."
-                st.session_state.chat_open = True
+                st.session_state.user_prompt, st.session_state.chat_open = "Berikan ringkasan performa saat ini.", True
                 st.rerun()
 
             st.markdown("---")
-
             for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+                with st.chat_message(message["role"]): st.markdown(message["content"])
 
-            prompt_input = st.chat_input("Tanya AI tentang OEE...")
-            active_prompt = prompt_input or st.session_state.user_prompt
-
+            active_prompt = st.chat_input("Tanya AI tentang OEE...") or st.session_state.user_prompt
             if active_prompt:
-                st.session_state.chat_open = True
-                st.session_state.user_prompt = None
-
+                st.session_state.chat_open, st.session_state.user_prompt = True, None
                 st.session_state.messages.append({"role": "user", "content": active_prompt})
-                with st.chat_message("user"):
-                    st.markdown(active_prompt)
+                with st.chat_message("user"): st.markdown(active_prompt)
 
                 with st.chat_message("assistant"):
                     p_lower = active_prompt.lower()
-
                     if "solusi" in p_lower or "perbaikan" in p_lower or "cara" in p_lower:
                         response = f"Rekomendasi AI untuk {selected_line}:\n\nUntuk meningkatkan OEE sebesar {(active_target - avg_oee):.2f}% menuju target {active_target:.1f}%, lakukan langkah interaktif berikut:\n\n1. Fokus Utama: {p1_name} (Perbaiki kerugian pada {p1_val['loss_type']}).\n2. Tindakan: {p1_val['action']}\n3. Follow Up: Evaluasi ulang nilai OEE dalam 7 hari ke depan untuk melihat dampaknya."
-
                     elif "availability" in p_lower or "downtime" in p_lower or "breakdown" in p_lower:
                         response = f"Analisis Availability AI:\n\nAvailability Line {selected_line} adalah {avg_avail:.2f}% (Standar: 90.0%).\n\nPenyebab Kerugian: Stop mesin yang tidak terencana dan durasi changeover.\nRekomendasi AI: Lakukan audit jadwal maintenance serta terapkan Single Minute Exchange of Die (SMED)."
-
                     elif "bermasalah" in p_lower or "rendah" in p_lower or "terburuk" in p_lower:
-                        line_summary = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct")
-                        worst_line = line_summary.iloc[0]
+                        worst_line = df.groupby("LineID")["OEE_pct"].mean().reset_index().sort_values(by="OEE_pct").iloc[0]
                         response = f"Analisis Data AI:\n\nLine dengan pencapaian OEE paling rendah saat ini adalah {worst_line['LineID']} dengan rata-rata OEE {worst_line['OEE_pct']:.2f}%.\n\nSaran AI: Prioritaskan perbaikan pada line ini sebelum melakukan ekspansi ke line lainnya."
-
                     elif "ringkasan" in p_lower or "status" in p_lower or "summary" in p_lower:
                         response = f"Ringkasan Kinerja {selected_line}:\n\nStatus OEE: {avg_oee:.2f}% (Target: {active_target:.1f}%)\nAvailability Rate: {avg_avail:.2f}%\nPerformance Rate: {avg_perf:.2f}%\nQuality Rate: {avg_qual:.2f}%\n\nPrioritas perbaikan saat ini berfokus pada pilar {p1_name}."
-
                     else:
-                        response = f"Respon AI:\n\nTerima kasih atas pertanyaan Anda tentang {active_prompt}.\n\nBerdasarkan data {selected_line}, pencapaian OEE saat ini sebesar {avg_oee:.2f}%. Setiap aspek operasional kami analisis berdasarkan 3 indikator utama (Availability, Performance, dan Quality).\n\nAda aspek spesifik lain yang ingin Anda gali lebih dalam?"
-
+                        response = f"Respon AI:\n\nTerima kasih atas pertanyaan Anda tentang {active_prompt}.\n\nBerdasarkan data {selected_line}, pencapaian OEE saat ini sebesar {avg_oee:.2f}%. Setiap aspek operasional kami analisis berdasarkan 3 indikator utama (Availability, Performance, dan Quality)."
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
 
@@ -559,4 +428,4 @@ else:
     st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
 
 # 8. FOOTER COPYRIGHT
-st.markdown('<div class="footer">copyright ardha dyota</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">copyright ardha dyota - PT. ARGAPURA 2024</div>', unsafe_allow_html=True)

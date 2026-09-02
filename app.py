@@ -367,8 +367,7 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
 
         with st.expander("Lihat Mentah Data Excel Detail"):
             st.dataframe(df_filtered, use_container_width=True)
-
-        # 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN TOMBOL RESET DAN RESPON ADAPTIF
+# 7. FLOATING CHAT AI INTERAKTIF WHATSAPP STYLE DENGAN TOMBOL RESET DAN RESPON ADAPTIF
         if "chat_open" not in st.session_state: st.session_state.chat_open = False
         
         def reset_chat_history():
@@ -481,5 +480,6 @@ Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap se
                 reset_chat_history()
                 st.session_state.chat_open = True
                 st.rerun()
+        
 # 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

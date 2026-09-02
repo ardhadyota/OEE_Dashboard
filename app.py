@@ -280,49 +280,79 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # 5. CHART SECTION 2: BATANG AKTUAL + GARIS TARGET (COMBO CHART)
-        st.markdown('<div class="section-title">Perbandingan Target vs Pencapaian OEE Setiap Line</div>', unsafe_allow_html=True)
+        # 5. CHART SECTION 2: RATIO PENCAPAIAN PER LINE (CONTOH SESUAI GAMBAR ACUAN)
+        st.markdown('<div class="section-title">Ratio Pencapaian per Line [Ratio]</div>', unsafe_allow_html=True)
         
-        df_line_oee = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index().sort_values(by="OEE_pct", ascending=False)
+        df_line_ratio = df.groupby("LineID").agg({'Target_Line': 'first', 'OEE_pct': 'mean'}).reset_index()
+        df_line_ratio['Ratio'] = df_line_ratio['OEE_pct'] / df_line_ratio['Target_Line']
+        df_line_ratio['Selisih_pct'] = df_line_ratio['OEE_pct'] - df_line_ratio['Target_Line']
         
-        # Penentuan Warna Batang Berdasarkan Pencapaian Target
-        colors = ['#10B981' if oee >= tgt else '#EF4444' for oee, tgt in zip(df_line_oee['OEE_pct'], df_line_oee['Target_Line'])]
+        # Urutkan ratio dari tertinggi ke terendah
+        df_line_ratio = df_line_ratio.sort_values(by="Ratio", ascending=False)
         
-        fig_bar_compare = go.Figure()
+        # Penentuan Warna Batang Berdasarkan Ratio (>= 1.0 -> Biru/Hijau, < 1.0 -> Merah)
+        bar_colors = ['#60A5FA' if r >= 1.0 else '#F87171' for r in df_line_ratio['Ratio']]
+        
+        fig_ratio = go.Figure()
 
-        # 1. Grafik Batang untuk Aktual OEE
-        fig_bar_compare.add_trace(go.Bar(
-            x=df_line_oee['LineID'],
-            y=df_line_oee['OEE_pct'],
-            name='Aktual OEE',
-            marker_color=colors,
-            text=[f"{val:.1f}%" for val in df_line_oee['OEE_pct']],
-            textposition='outside'
+        # 1. Grafik Batang Ratio
+        hover_texts = [
+            f"<b>{line}</b><br>Target: {tgt:.1f}%<br>Aktual: {oee:.1f}%<br>Selisih: {sel:+.1f}%<br>Ratio: {r:.3f}"
+            for line, tgt, oee, sel, r in zip(
+                df_line_ratio['LineID'], 
+                df_line_ratio['Target_Line'], 
+                df_line_ratio['OEE_pct'], 
+                df_line_ratio['Selisih_pct'],
+                df_line_ratio['Ratio']
+            )
+        ]
+
+        fig_ratio.add_trace(go.Bar(
+            x=df_line_ratio['LineID'],
+            y=df_line_ratio['Ratio'],
+            name='Ratio OEE',
+            marker_color=bar_colors,
+            text=[f"{r:.3f}" for r in df_line_ratio['Ratio']],
+            textfont=dict(size=11, color='#FFFFFF', family="Arial"),
+            textposition='outside',
+            hoverinfo='text',
+            hovertext=hover_texts
         ))
 
-        # 2. Grafik Garis untuk Target Line
-        fig_bar_compare.add_trace(go.Scatter(
-            x=df_line_oee['LineID'],
-            y=df_line_oee['Target_Line'],
-            name='Target Line',
-            mode='lines+markers',
-            line=dict(color='#6366F1', width=3, dash='dash'),
-            marker=dict(size=8, color='#818CF8'),
-            text=[f"{val:.1f}%" for val in df_line_oee['Target_Line']],
-            textposition='top center'
-        ))
+        # 2. Garis Merah Horizontal Target = 1.0
+        fig_ratio.add_shape(
+            type="line",
+            x0=-0.5,
+            x1=len(df_line_ratio['LineID']) - 0.5,
+            y0=1.0,
+            y1=1.0,
+            line=dict(color="#EF4444", width=3)
+        )
 
-        fig_bar_compare.update_layout(
+        fig_ratio.add_annotation(
+            x=len(df_line_ratio['LineID']) - 1,
+            y=1.05,
+            text="Target Baseline (1.0)",
+            showarrow=False,
+            font=dict(color="#EF4444", size=12, family="Arial")
+        )
+
+        fig_ratio.update_layout(
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='#9CA3AF'),
-            yaxis=dict(range=[0, 115], gridcolor='rgba(255,255,255,0.05)', title="OEE (%)"),
+            yaxis=dict(
+                title="[Ratio]",
+                range=[0, max(df_line_ratio['Ratio'].max() * 1.15, 1.3)],
+                gridcolor='rgba(255,255,255,0.08)'
+            ),
             xaxis=dict(title="", tickangle=-45),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=""),
             height=430,
-            margin=dict(l=10, r=10, t=20, b=80)
+            margin=dict(l=10, r=10, t=30, b=80),
+            showlegend=False
         )
-        st.plotly_chart(fig_bar_compare, use_container_width=True)
+        
+        st.plotly_chart(fig_ratio, use_container_width=True)
 
         st.markdown("---")
 

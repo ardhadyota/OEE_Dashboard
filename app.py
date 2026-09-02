@@ -416,48 +416,70 @@ if uploaded_file is not None:
         
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # 7. AI ANALYSIS ENGINE
+        # 7. AI ANALYSIS ENGINE (SUDAH DIPERBAIKI)
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
         
+        # Perhitungan Gap Sebenarnya (Standar - Aktual)
+        # Jika nilai positif = di bawah target/standar (bermasalah)
         factor_details = {
-            "Availability": {"gap": STD_AVAIL - avg_avail, "actual": avg_avail, "target": STD_AVAIL, "loss_type": "Downtime Losses Breakdown dan Setup", "action": "Percepat waktu pergantian cetakan SMED dan kurangi waktu mesin mati akibat kerusakan unplanned breakdown."},
-            "Performance": {"gap": STD_PERF - avg_perf, "actual": avg_perf, "target": STD_PERF, "loss_type": "Speed Losses dan Micro Stoppages", "action": "Analisis penyebab penurunan kecepatan operasional mesin, kurangi henti singkat minor stops, serta kalibrasi siklus standar."},
-            "Quality": {"gap": STD_QUAL - avg_qual, "actual": avg_qual, "target": STD_QUAL, "loss_type": "Defect Losses Reject dan Rework", "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."}
+            "Availability": {
+                "gap": STD_AVAIL - avg_avail, 
+                "actual": avg_avail, 
+                "target": STD_AVAIL, 
+                "loss_type": "Downtime Losses Breakdown dan Setup", 
+                "action": "Percepat waktu pergantian cetakan SMED dan kurangi waktu mesin mati akibat kerusakan unplanned breakdown."
+            },
+            "Performance": {
+                "gap": STD_PERF - avg_perf, 
+                "actual": avg_perf, 
+                "target": STD_PERF, 
+                "loss_type": "Speed Losses dan Micro Stoppages", 
+                "action": "Analisis penyebab penurunan kecepatan operasional mesin, kurangi henti singkat minor stops, serta kalibrasi siklus standar."
+            },
+            "Quality": {
+                "gap": STD_QUAL - avg_qual, 
+                "actual": avg_qual, 
+                "target": STD_QUAL, 
+                "loss_type": "Defect Losses Reject dan Rework", 
+                "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."
+            }
         }
 
+        # Urutkan berdasarkan gap terbesar yang DI BAWAH STANDAR (nilai gap paling positif)
         sorted_factors = sorted(factor_details.items(), key=lambda item: item[1]["gap"], reverse=True)
         p1_name, p1_val = sorted_factors[0]
         p2_name, p2_val = sorted_factors[1]
         p3_name, p3_val = sorted_factors[2]
 
+        # Tentukan teks status utama
+        if p1_val['gap'] > 0:
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            desc_status = f"Indikator **{p1_name}** mengalami penyimpangan kerugian paling dominan dengan gap sebesar **{p1_val['gap']:.2f}%** di bawah standar (Aktual: {p1_val['actual']:.2f}% vs Standar: {p1_val['target']:.1f}%). Kerugian ini terutama dipicu oleh {p1_val['loss_type']}."
+        else:
+            header_status = "Seluruh Indikator Berada di Atas Standar!"
+            desc_status = f"Luar biasa! Seluruh indikator (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melebihi standar operasional."
+
         st.markdown(f"""
 ### Laporan Evaluasi AI: {selected_line}
-Berdasarkan evaluasi tren data harian, pencapaian OEE berada pada tingkat {avg_oee:.2f}% (Target: {active_target:.1f}%).
+Berdasarkan evaluasi tren data harian, pencapaian OEE berada pada tingkat **{avg_oee:.2f}%** (Target Line: **{active_target:.1f}%**).
 
 ---
 
-#### Rekomendasi Utama: Fokus Perbaiki {p1_name} Terlebih Dahulu!
-Indikator {p1_name} mengalami penyimpangan kerugian paling dominan dengan gap sebesar {abs(p1_val['gap']):.2f}% di bawah standar (Aktual: {p1_val['actual']:.2f}% vs Standar: {p1_val['target']:.1f}%). Kerugian ini terutama dipicu oleh {p1_val['loss_type']}.
+#### Rekomendasi Utama: {header_status}
+{desc_status}
 
 #### Urutan Matriks Prioritas Perbaikan Roadmap:
-1. Prioritas 1 — {p1_name} (Gap: {p1_val['gap']:.2f}% | Aktual: {p1_val['actual']:.2f}%)
-   Tindakan: {p1_val['action']}
-2. Prioritas 2 — {p2_name} (Gap: {p2_val['gap']:.2f}% | Aktual: {p2_val['actual']:.2f}%)
-   Tindakan: {p2_val['action']}
-3. Prioritas 3 — {p3_name} (Gap: {p3_val['gap']:.2f}% | Aktual: {p3_val['actual']:.2f}%)
-   Tindakan: Indikator ini relatif stabil, pertahankan performa operasional.
+1. **Prioritas 1 — {p1_name}** (Gap: {p1_val['gap']:+.2f}% | Aktual: {p1_val['actual']:.2f}% vs Std: {p1_val['target']:.1f}%)  
+   *Tindakan:* {p1_val['action']}
+2. **Prioritas 2 — {p2_name}** (Gap: {p2_val['gap']:+.2f}% | Aktual: {p2_val['actual']:.2f}% vs Std: {p2_val['target']:.1f}%)  
+   *Tindakan:* {p2_val['action']}
+3. **Prioritas 3 — {p3_name}** (Gap: {p3_val['gap']:+.2f}% | Aktual: {p3_val['actual']:.2f}% vs Std: {p3_val['target']:.1f}%)  
+   *Tindakan:* {p3_val['action']}
 """)
 
-        st.info(f"Catatan Sistem: Menyelesaikan permasalahan pada Prioritas 1 ({p1_name}) akan memberikan dampak kenaikan OEE yang paling signifikan terhadap total produktivitas.")
-
-        with st.expander("Lihat Mentah Data Excel Detail"):
-            st.dataframe(df_filtered, use_container_width=True)
-
-    except Exception as e:
-        st.error(f"Gagal memproses file: {e}")
-
-else:
-    st.info("Silakan unggah file Excel OEE di sidebar sebelah kiri untuk mulai menampilkan analisis dashboard.")
-
+        if p1_val['gap'] > 0:
+            st.info(f"Catatan Sistem: Menyelesaikan permasalahan pada Prioritas 1 ({p1_name}) akan memberikan dampak kenaikan OEE yang paling signifikan terhadap total produktivitas {selected_line}.")
+        else:
+            st.success(f"Catatan Sistem: Performa {selected_line} sangat baik. Pertahankan kendali proses yang ada!")
 # 8. FOOTER COPYRIGHT
 st.markdown('<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>', unsafe_allow_html=True)

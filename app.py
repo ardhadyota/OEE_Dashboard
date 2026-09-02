@@ -42,7 +42,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. STANDAR 3 FAKTOR & TARGET OEE SPESIFIK PER LINE (SESUAI LAMPIRAN TABEL)
+# 2. STANDAR 3 FAKTOR & TARGET OEE SPESIFIK PER LINE
 LINE_STANDARDS = {
     "BTP":        {"avail": 99.0, "perf": 98.0, "qual": 100.0, "oee": 96.74},
     "BTP MIX":    {"avail": 98.0, "perf": 99.0, "qual": 100.0, "oee": 96.74},
@@ -86,7 +86,7 @@ if uploaded_file is not None:
             st.error(f"Format Excel Tidak Sesuai! Kolom berikut tidak ditemukan: {', '.join(missing_cols)}")
             st.stop()
 
-        # Transformasi Data Safe
+        # Transformasi Data
         df['Tgl'] = pd.to_datetime(df['Tgl'], errors='coerce')
         df = df.dropna(subset=['Tgl']).sort_values(by='Tgl')
 
@@ -155,11 +155,17 @@ if uploaded_file is not None:
                 return f'<span class="metric-badge badge-success">+{diff:.2f}% vs {target_text}</span>'
             return f'<span class="metric-badge badge-danger">{diff:.2f}% vs {target_text}</span>'
 
+        # Variabel teks terpisah untuk menghindari syntax error di f-string
+        std_oee_txt = f"Std {active_std['oee']:.2f}%"
+        std_avail_txt = f"Std {active_std['avail']:.1f}%"
+        std_perf_txt = f"Std {active_std['perf']:.1f}%"
+        std_qual_txt = f"Std {active_std['qual']:.2f}%"
+
         c1, c2, c3, c4 = st.columns(4)
-        c1.markdown(f'<div class="metric-card"><div class="metric-title">Overall OEE</div><div class="metric-value">{avg_oee:.2f}%</div>{get_badge_html(diff_oee, f"Std {active_std[\'oee\']:.2f}%")}</div>', unsafe_allow_html=True)
-        c2.markdown(f'<div class="metric-card"><div class="metric-title">Availability</div><div class="metric-value">{avg_avail:.2f}%</div>{get_badge_html(diff_avail, f"Std {active_std[\'avail\']:.1f}%")}</div>', unsafe_allow_html=True)
-        c3.markdown(f'<div class="metric-card"><div class="metric-title">Performance</div><div class="metric-value">{avg_perf:.2f}%</div>{get_badge_html(diff_perf, f"Std {active_std[\'perf\']:.1f}%")}</div>', unsafe_allow_html=True)
-        c4.markdown(f'<div class="metric-card"><div class="metric-title">Quality Rate</div><div class="metric-value">{avg_qual:.2f}%</div>{get_badge_html(diff_qual, f"Std {active_std[\'qual\']:.2f}%")}</div>', unsafe_allow_html=True)
+        c1.markdown(f'<div class="metric-card"><div class="metric-title">Overall OEE</div><div class="metric-value">{avg_oee:.2f}%</div>{get_badge_html(diff_oee, std_oee_txt)}</div>', unsafe_allow_html=True)
+        c2.markdown(f'<div class="metric-card"><div class="metric-title">Availability</div><div class="metric-value">{avg_avail:.2f}%</div>{get_badge_html(diff_avail, std_avail_txt)}</div>', unsafe_allow_html=True)
+        c3.markdown(f'<div class="metric-card"><div class="metric-title">Performance</div><div class="metric-value">{avg_perf:.2f}%</div>{get_badge_html(diff_perf, std_perf_txt)}</div>', unsafe_allow_html=True)
+        c4.markdown(f'<div class="metric-card"><div class="metric-title">Quality Rate</div><div class="metric-value">{avg_qual:.2f}%</div>{get_badge_html(diff_qual, std_qual_txt)}</div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -257,7 +263,7 @@ if uploaded_file is not None:
         fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(title="OEE (%)"), xaxis=dict(title="Tanggal Produksi", type='category', tickangle=-45), height=420, showlegend=False)
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # 7. AI ANALYSIS ENGINE (DENGAN STANDAR SPESIFIK LINE)
+        # 7. AI ANALYSIS ENGINE
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
         
         factor_details = {
@@ -266,7 +272,6 @@ if uploaded_file is not None:
             "Quality": {"gap": active_std['qual'] - avg_qual, "actual": avg_qual, "target": active_std['qual'], "loss_type": "Defect Losses Reject dan Rework", "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."}
         }
 
-        # Urutkan berdasarkan gap terbesar di bawah standar spesifik
         sorted_factors = sorted(factor_details.items(), key=lambda item: item[1]["gap"], reverse=True)
         p1_name, p1_val = sorted_factors[0]
         p2_name, p2_val = sorted_factors[1]

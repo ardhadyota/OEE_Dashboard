@@ -143,14 +143,6 @@ st.markdown("""
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         margin-top: 40px;
     }
-    
-    /* Image background support for transparent logos */
-    .logo-container {
-        background-color: white;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -177,17 +169,17 @@ DEFAULT_TARGETS = {
 TARGET_OVERALL_DEFAULT = 94.0
 
 # ==========================================
-# MENAMPILKAN LOGO DI SIDEBAR (KARTU PUTIH PROPORSIIONAL)
+# MENAMPILKAN LOGO DI SIDEBAR (PROPORSI RAPI & TERANG)
 # ==========================================
 if os.path.exists("logo.png"):
     st.sidebar.markdown("""
         <div style="
             background-color: #FFFFFF;
-            padding: 12px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 10px;
             text-align: center;
-            margin: 0 auto 15px auto;
-            width: 75%;
+            margin: 10px auto 15px auto;
+            width: 70%;
             box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
         ">
     """, unsafe_allow_html=True)

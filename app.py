@@ -42,7 +42,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. INISIALISASI DATABASE RINGAN REKAP BULANAN
+# 2. DATABASE REKAP TAHUNAN OTOMATIS
 SUMMARY_FILE = "oee_monthly_summary.csv"
 
 def load_or_init_monthly_summary():
@@ -54,25 +54,29 @@ def load_or_init_monthly_summary():
         df_init.to_csv(SUMMARY_FILE, index=False)
         return df_init
 
-# 3. STANDAR 3 FAKTOR & TARGET OEE SPESIFIK PER LINE
+# 3. STANDAR SPESIFIK 3 FAKTOR PER LINE (TARGET OEE DIHITUNG OTOMATIS)
 LINE_STANDARDS = {
-    "BTP":        {"avail": 99.0, "perf": 98.0, "qual": 100.0, "oee": 96.74},
-    "BTP MIX":    {"avail": 98.0, "perf": 99.0, "qual": 100.0, "oee": 96.74},
-    "DFOAM 1":   {"avail": 98.0, "perf": 100.0, "qual": 100.0, "oee": 98.00},
-    "DFOAM 2":   {"avail": 98.0, "perf": 100.0, "qual": 100.0, "oee": 98.00},
-    "DFOAM 3":   {"avail": 98.0, "perf": 100.0, "qual": 100.0, "oee": 98.00},
-    "DFOAM 4":   {"avail": 98.0, "perf": 100.0, "qual": 100.0, "oee": 98.00},
-    "PP NOU":    {"avail": 80.0, "perf": 100.0, "qual": 100.0, "oee": 80.00},
-    "PP PUNCH":  {"avail": 100.0, "perf": 98.0, "qual": 100.0, "oee": 97.83},
-    "PP PUNCH 1":{"avail": 100.0, "perf": 98.0, "qual": 100.0, "oee": 97.83},
-    "PVC 1":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
-    "PVC 2":     {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
-    "SMS 1":     {"avail": 93.0, "perf": 100.0, "qual": 100.0, "oee": 93.48},
-    "SMS 2":     {"avail": 93.0, "perf": 100.0, "qual": 100.0, "oee": 93.48},
-    "STF EXT 1": {"avail": 90.0, "perf": 100.0, "qual": 100.0, "oee": 90.00},
-    "STF EXT 2": {"avail": 90.0, "perf": 100.0, "qual": 100.0, "oee": 90.00},
-    "STF MIX":   {"avail": 92.0, "perf": 100.0, "qual": 100.0, "oee": 92.00},
+    "BTP":        {"avail": 99.0, "perf": 98.0, "qual": 100.0},
+    "BTP MIX":    {"avail": 98.0, "perf": 99.0, "qual": 100.0},
+    "DFOAM 1":   {"avail": 98.0, "perf": 100.0, "qual": 100.0},
+    "DFOAM 2":   {"avail": 98.0, "perf": 100.0, "qual": 100.0},
+    "DFOAM 3":   {"avail": 98.0, "perf": 100.0, "qual": 100.0},
+    "DFOAM 4":   {"avail": 98.0, "perf": 100.0, "qual": 100.0},
+    "PP NOU":    {"avail": 80.0, "perf": 100.0, "qual": 100.0},
+    "PP PUNCH":  {"avail": 100.0, "perf": 98.0, "qual": 100.0},
+    "PP PUNCH 1":{"avail": 100.0, "perf": 98.0, "qual": 100.0},
+    "PVC 1":     {"avail": 93.0, "perf": 99.0, "qual": 99.95},
+    "PVC 2":     {"avail": 93.0, "perf": 99.0, "qual": 99.95},
+    "SMS 1":     {"avail": 93.0, "perf": 100.0, "qual": 100.0},
+    "SMS 2":     {"avail": 93.0, "perf": 100.0, "qual": 100.0},
+    "STF EXT 1": {"avail": 90.0, "perf": 100.0, "qual": 100.0},
+    "STF EXT 2": {"avail": 90.0, "perf": 100.0, "qual": 100.0},
+    "STF MIX":   {"avail": 92.0, "perf": 100.0, "qual": 100.0},
 }
+
+# Hitung Target OEE spesifik per line dari perkalian 3 faktor
+for key, val in LINE_STANDARDS.items():
+    val['oee'] = (val['avail'] / 100.0) * (val['perf'] / 100.0) * (val['qual'] / 100.0) * 100.0
 
 DEFAULT_OVERALL_STD = {"avail": 90.0, "perf": 95.0, "qual": 99.0, "oee": 94.00}
 
@@ -115,7 +119,7 @@ if uploaded_file is not None:
         df['Perf_pct'] = df['% Performance'].apply(lambda x: x * 100 if x <= 1.0 else x)
         df['Qual_pct'] = df['Quality'].apply(lambda x: x * 100 if x <= 1.0 else x)
 
-        # Update Rekap Tahunan Otomatis
+        # Update Rekap Tahunan Otomatis (Mengambil Rata-Rata OEE Semua Line)
         current_month_name = df['Tgl'].dt.strftime('%b').iloc[0]
         avg_monthly_all_lines = df['OEE_pct'].mean()
         
@@ -123,7 +127,7 @@ if uploaded_file is not None:
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
         # ---------------------------------------------------------------------
-        # BOARD TOP: EXECUTIVE SUMMARY (TREND 1 TAHUN JAN - DES)
+        # BOARD TOP: EXECUTIVE SUMMARY (TREND TAHUNAN JAN - DES)
         # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>', unsafe_allow_html=True)
         
@@ -163,9 +167,12 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # ---------------------------------------------------------------------
-        # METRIK & ANALYSIS BREAKDOWN BULAN AKTIF
+        # DETAIL METRIK BERDASARKAN TARGET SPESIFIK LINE
         # ---------------------------------------------------------------------
         df['Target_Line'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['oee'])
+        df['Target_Avail'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['avail'])
+        df['Target_Perf'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['perf'])
+        df['Target_Qual'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['qual'])
         
         st.sidebar.markdown("---")
         st.sidebar.markdown("<h4 style='color: #E2E8F0;'>Filter Data</h4>", unsafe_allow_html=True)
@@ -204,7 +211,7 @@ if uploaded_file is not None:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # CHART BENCHMARK & LINE DI BAWAH TARGET
+        # CHART BENCHMARK & DAFTAR UNPRACTICAL LINE
         col_left, col_right = st.columns([1, 1.2])
 
         with col_left:
@@ -224,16 +231,36 @@ if uploaded_file is not None:
                 if avg_oee < active_std['oee']:
                     st.error(f"Line {selected_line} tidak mencapai target. Kekurangan: {(active_std['oee'] - avg_oee):.2f}%.")
                 else:
-                    st.success(f"Line {selected_line} berhasil memenuhi atau melampaui target yang ditentukan ({active_std['oee']:.2f}%).")
+                    st.success(f"Line {selected_line} berhasil memenuhi/melampaui target yang ditentukan ({active_std['oee']:.2f}%).")
             else:
-                line_summary = df.groupby("LineID").agg({'OEE_pct': 'mean', 'Target_Line': 'first', 'Avail_pct': 'mean', 'Perf_pct': 'mean', 'Qual_pct': 'mean'}).reset_index()
-                problem_list = [{"Nama Line": row['LineID'], "Target": f"{row['Target_Line']:.2f}%", "Aktual OEE": f"{row['OEE_pct']:.2f}%", "Gap": row['Target_Line'] - row['OEE_pct'], "Kekurangan": f"-{(row['Target_Line'] - row['OEE_pct']):.2f}%", "Availability": f"{row['Avail_pct']:.1f}%", "Performance": f"{row['Perf_pct']:.1f}%", "Quality": f"{row['Qual_pct']:.1f}%"} for idx, row in line_summary.iterrows() if row['Target_Line'] - row['OEE_pct'] > 0]
+                line_summary = df.groupby("LineID").agg({
+                    'OEE_pct': 'mean', 'Target_Line': 'first',
+                    'Avail_pct': 'mean', 'Target_Avail': 'first',
+                    'Perf_pct': 'mean', 'Target_Perf': 'first',
+                    'Qual_pct': 'mean', 'Target_Qual': 'first'
+                }).reset_index()
+                
+                problem_list = []
+                for idx, row in line_summary.iterrows():
+                    gap_oee = row['Target_Line'] - row['OEE_pct']
+                    if gap_oee > 0:
+                        problem_list.append({
+                            "Nama Line": row['LineID'],
+                            "Target OEE": f"{row['Target_Line']:.2f}%",
+                            "Aktual OEE": f"{row['OEE_pct']:.2f}%",
+                            "Gap": gap_oee,
+                            "Kekurangan": f"-{gap_oee:.2f}%",
+                            "Availability": f"{row['Avail_pct']:.1f}% / {row['Target_Avail']:.0f}%",
+                            "Performance": f"{row['Perf_pct']:.1f}% / {row['Target_Perf']:.0f}%",
+                            "Quality": f"{row['Qual_pct']:.1f}% / {row['Target_Qual']:.1f}%"
+                        })
+                        
                 if problem_list:
                     df_problems = pd.DataFrame(problem_list).sort_values(by="Gap", ascending=False).drop(columns=["Gap"])
                     df_problems.index = range(1, len(df_problems) + 1)
                     st.dataframe(df_problems, height=270, use_container_width=True)
                 else:
-                    st.success("Luar biasa! Seluruh Line produksi berhasil mencapai target OEE spesifik.")
+                    st.success("Luar biasa! Seluruh Line produksi berhasil mencapai target OEE spesifik masing-masing.")
 
         st.markdown("---")
 
@@ -280,12 +307,12 @@ if uploaded_file is not None:
         fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(title="OEE (%)"), xaxis=dict(title="Tanggal Produksi", type='category', tickangle=-45), height=420, showlegend=False)
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # AI ANALYSIS ENGINE
-        st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa</div>', unsafe_allow_html=True)
+        # AI DIAGNOSIS ENGINE BASED ON SPECIFIC LINE FACTOR STANDARDS
+        st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>', unsafe_allow_html=True)
         factor_details = {
-            "Availability": {"gap": active_std['avail'] - avg_avail, "actual": avg_avail, "target": active_std['avail'], "loss_type": "Downtime Losses Breakdown dan Setup", "action": "Percepat waktu pergantian cetakan SMED dan kurangi waktu mesin mati akibat kerusakan unplanned breakdown."},
-            "Performance": {"gap": active_std['perf'] - avg_perf, "actual": avg_perf, "target": active_std['perf'], "loss_type": "Speed Losses dan Micro Stoppages", "action": "Analisis penyebab penurunan kecepatan operasional mesin, kurangi henti singkat minor stops, serta kalibrasi siklus standar."},
-            "Quality": {"gap": active_std['qual'] - avg_qual, "actual": avg_qual, "target": active_std['qual'], "loss_type": "Defect Losses Reject dan Rework", "action": "Perketat inspeksi material awal, tingkatkan kendali proses visual, dan evaluasi ulang setelan standar produksi."}
+            "Availability": {"gap": active_std['avail'] - avg_avail, "actual": avg_avail, "target": active_std['avail'], "loss_type": "Downtime Losses Breakdown dan Waktu Setup", "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED)."},
+            "Performance": {"gap": active_std['perf'] - avg_perf, "actual": avg_perf, "target": active_std['perf'], "loss_type": "Speed Losses dan Micro Stoppages", "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops)."},
+            "Quality": {"gap": active_std['qual'] - avg_qual, "actual": avg_qual, "target": active_std['qual'], "loss_type": "Defect Losses Reject dan Rework", "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses."}
         }
 
         sorted_factors = sorted(factor_details.items(), key=lambda item: item[1]["gap"], reverse=True)
@@ -295,37 +322,37 @@ if uploaded_file is not None:
 
         if p1_val['gap'] > 0:
             header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** mengalami penyimpangan kerugian paling dominan dengan gap sebesar **{p1_val['gap']:.2f}%** di bawah standar (Aktual: {p1_val['actual']:.2f}% vs Standar Line: {p1_val['target']:.2f}%). Kerugian ini terutama dipicu oleh {p1_val['loss_type']}."
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['gap']:.2f}%** di bawah target spesifiknya (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
         else:
-            header_status = "Seluruh Indikator Berada di Atas Standar!"
-            desc_status = f"Luar biasa! Seluruh indikator (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melebihi standar operasional spesifik yang ditentukan."
+            header_status = "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            desc_status = f"Luar biasa! Semua 3 faktor utama (Availability, Performance, Quality) pada **{selected_line}** berada di atas target spesifik masing-masing."
 
         st.markdown(f"""
-### Laporan Evaluasi AI: {selected_line}
-Berdasarkan evaluasi tren data harian, pencapaian OEE berada pada tingkat **{avg_oee:.2f}%** (Target Line: **{active_std['oee']:.2f}%**).
+### Laporan Diagnosis AI: {selected_line}
+Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
 
 ---
 
 #### Rekomendasi Utama: {header_status}
 {desc_status}
 
-#### Urutan Matriks Prioritas Perbaikan Roadmap:
-1. **Prioritas 1 — {p1_name}** (Gap: {p1_val['gap']:+.2f}% | Aktual: {p1_val['actual']:.2f}% vs Standar Line: {p1_val['target']:.2f}%)  
+#### Urutan Matriks Prioritas Perbaikan:
+1. **Prioritas 1 — {p1_name}** (Gap: {p1_val['gap']:+.2f}% | Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)  
    *Tindakan:* {p1_val['action']}
-2. **Prioritas 2 — {p2_name}** (Gap: {p2_val['gap']:+.2f}% | Aktual: {p2_val['actual']:.2f}% vs Standar Line: {p2_val['target']:.2f}%)  
+2. **Prioritas 2 — {p2_name}** (Gap: {p2_val['gap']:+.2f}% | Aktual: {p2_val['actual']:.2f}% vs Target Line: {p2_val['target']:.2f}%)  
    *Tindakan:* {p2_val['action']}
-3. **Prioritas 3 — {p3_name}** (Gap: {p3_val['gap']:+.2f}% | Aktual: {p3_val['actual']:.2f}% vs Standar Line: {p3_val['target']:.2f}%)  
+3. **Prioritas 3 — {p3_name}** (Gap: {p3_val['gap']:+.2f}% | Aktual: {p3_val['actual']:.2f}% vs Target Line: {p3_val['target']:.2f}%)  
    *Tindakan:* {p3_val['action']}
 """)
 
-        with st.expander("Lihat Mentah Data Excel Detail"):
+        with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")
 
 else:
-    # Tampilan Standby Jika Belum Upload File Bulanan
+    # Standby View jika Belum Upload File Bulanan
     st.markdown('<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>', unsafe_allow_html=True)
     fig_trend_year = go.Figure()
     

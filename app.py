@@ -1139,7 +1139,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         # SEKSI I: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------
         st.markdown(
-            '<div class="section-title">G. Rencana PDCA & Monitoring Improvement</div>',
+            '<div class="section-title">I. Rencana PDCA & Monitoring Improvement</div>',
             unsafe_allow_html=True,
         )
 

@@ -496,19 +496,19 @@ if uploaded_file is not None:
             st.error(
                 f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
+                f"Remark: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
         elif status_type == "warning":
             st.warning(
                 f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
+                f"Catatan Operasional: Perhatian & evaluasi harian pada akar masalah utama."
             )
         else:
             st.success(
                 f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
+                f"Catatan Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
 
         st.markdown("---")

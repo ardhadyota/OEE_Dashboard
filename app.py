@@ -260,7 +260,7 @@ uploaded_file = st.sidebar.file_uploader(
 st.markdown(
     """
     <div class="dashboard-header">
-        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
+        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Operasional</p></div>
         <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
     </div>
 """,

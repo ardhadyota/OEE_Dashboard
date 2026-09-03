@@ -217,7 +217,6 @@ if uploaded_file is not None:
     try:
         df = pd.read_excel(uploaded_file, sheet_name="Data Daily")
 
-        # Bersihkan nama kolom Excel dari spasi liar/newline
         df.columns = [str(c).strip() for c in df.columns]
 
         required_cols = [
@@ -514,7 +513,7 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI PARETO ANALYSIS (HASIL PENJUMLAHAN DIBULATKAN TANPA KOMA)
+        # SEKSI PARETO ANALYSIS GLOBAL (HASIL DIBULATKAN TANPA KOMA)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
@@ -535,20 +534,23 @@ if uploaded_file is not None:
             col for col in EXPLICIT_LOSS_COLS if col in df_filtered.columns
         ]
 
+        # Konversi tipe data losses jika string berkoma
+        for col in available_loss_cols:
+            if df[col].dtype == "object":
+                df[col] = (
+                    df[col].astype(str).str.replace(",", ".").str.strip()
+                )
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+
+        df_filtered_loss = (
+            df.copy()
+            if selected_line == "Semua Line"
+            else df[df["LineID"] == selected_line]
+        )
+
         loss_data = {}
         for col in available_loss_cols:
-            series_clean = df_filtered[col]
-            if series_clean.dtype == "object":
-                series_clean = (
-                    series_clean.astype(str)
-                    .str.replace(",", ".")
-                    .str.strip()
-                )
-
-            # Penjumlahan total baris lalu dibulat (round)
-            total_val = pd.to_numeric(
-                series_clean, errors="coerce"
-            ).fillna(0).sum()
+            total_val = df_filtered_loss[col].sum()
             loss_data[col] = round(total_val)
 
         loss_sums = pd.DataFrame(
@@ -564,7 +566,6 @@ if uploaded_file is not None:
             )
             loss_sums = pd.concat([loss_sums, df_missing], ignore_index=True)
 
-        # Urutkan dari durasi menit terbesar
         loss_sums = loss_sums.sort_values(by="Menit", ascending=False).reset_index(drop=True)
 
         loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
@@ -590,7 +591,6 @@ if uploaded_file is not None:
                     y=loss_sums["Menit"],
                     name="Durasi (Menit)",
                     marker_color="#EF4444",
-                    # Format teks pada grafik dibulatkan tanpa koma (misal: 2,765m)
                     text=[f"{int(m):,}m" for m in loss_sums["Menit"]],
                     textposition="outside",
                 ),
@@ -649,7 +649,6 @@ if uploaded_file is not None:
                 "Durasi (Menit)",
                 "Kumulatif (%)",
             ]
-            # Format tampilan durasi bulat penuh (tanpa desimal)
             top_5_display["Durasi (Menit)"] = top_5_display[
                 "Durasi (Menit)"
             ].apply(lambda x: f"{int(x):,} menit")
@@ -667,6 +666,131 @@ if uploaded_file is not None:
                 st.caption(
                     f"**Total Kerugian Operasional:** {int(total_loss_min):,} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
                 )
+
+        st.markdown("---")
+
+        # =========================================================
+        # SEKSI BARU: BREAKDOWN SIX BIG LOSSES PER LINE (PRIORITAS REPARASI)
+        # =========================================================
+        st.markdown(
+            '<div class="section-title">Matrix Breakdown Six Big Losses per Line & Prioritas Perbaikan</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Hitung sum per line untuk tiap kolom losses
+        df_line_losses = df.groupby("LineID")[available_loss_cols].sum()
+        # Pembulatan bulat utuh
+        df_line_losses = df_line_losses.round(0).astype(int)
+
+        # Tambahkan Total Losses per Line
+        df_line_losses["TOTAL_LOSSES"] = df_line_losses.sum(axis=1)
+        df_line_losses = df_line_losses.sort_values(
+            by="TOTAL_LOSSES", ascending=False
+        )
+
+        # Temukan loss terbesar dominan di masing-masing line
+        top_cause_per_line = []
+        for idx_line, row_l in df_line_losses.iterrows():
+            causes_only = row_l.drop("TOTAL_LOSSES")
+            if causes_only.max() > 0:
+                top_cause_name = causes_only.idxmax()
+                top_cause_val = causes_only.max()
+                top_cause_per_line.append(
+                    f"{top_cause_name} ({top_cause_val:,} min)"
+                )
+            else:
+                top_cause_per_line.append("N/A")
+
+        df_line_losses_display = df_line_losses.copy()
+        df_line_losses_display["Penyebab Utama Dominan"] = top_cause_per_line
+
+        # Format tampilan angka di tabel agar ada pemisah ribuan
+        for c_col in available_loss_cols + ["TOTAL_LOSSES"]:
+            df_line_losses_display[c_col] = df_line_losses_display[c_col].apply(
+                lambda x: f"{x:,}"
+            )
+
+        # Susun urutan kolom tampilan
+        ordered_cols = (
+            ["TOTAL_LOSSES", "Penyebab Utama Dominan"] + available_loss_cols
+        )
+        df_line_losses_display = df_line_losses_display[ordered_cols]
+
+        col_matrix_tbl, col_priority_info = st.columns([1.6, 1])
+
+        with col_matrix_tbl:
+            st.markdown(
+                "<h4 style='color: #F3F4F6;'>Matrix Total Waktu Hilang (Menit) per Line</h4>",
+                unsafe_allow_html=True,
+            )
+            st.dataframe(df_line_losses_display, height=350, use_container_width=True)
+
+        with col_priority_info:
+            st.markdown(
+                "<h4 style='color: #EF4444;'>Urutan Line Prioritas Perbaikan</h4>",
+                unsafe_allow_html=True,
+            )
+
+            worst_3_lines = df_line_losses.head(3)
+
+            priority_html = ""
+            badges = ["badge-danger", "badge-danger", "badge-success"]
+            for i, (l_name, l_row) in enumerate(worst_3_lines.iterrows(), 1):
+                tot_l = l_row["TOTAL_LOSSES"]
+                causes_only = l_row.drop("TOTAL_LOSSES")
+                main_l_name = causes_only.idxmax() if causes_only.max() > 0 else "-"
+                main_l_val = causes_only.max()
+
+                priority_html += f"""
+                <div style="background-color: #1E293B; border-left: 4px solid #EF4444; padding: 10px 14px; margin-bottom: 10px; border-radius: 6px;">
+                    <div style="font-weight: bold; color: #F8FAFC;">Prioritas #{i}: {l_name}</div>
+                    <div style="font-size: 0.88rem; color: #94A3B8;">Total Kerugian: <b style="color:#F87171;">{tot_l:,} Menit</b></div>
+                    <div style="font-size: 0.85rem; color: #F59E0B;">Fokus Utama: <b>{main_l_name}</b> ({main_l_val:,} Menit)</div>
+                </div>
+                """
+
+            st.markdown(priority_html, unsafe_allow_html=True)
+
+        # GRAFIK STACKED BAR LOSSES PER LINE
+        st.markdown(
+            "<h4 style='color: #F3F4F6;'>Visualisasi Komposisi Kerugian per Line Produksi</h4>",
+            unsafe_allow_html=True,
+        )
+
+        fig_stacked_loss = go.Figure()
+        colors_palette = [
+            "#EF4444",
+            "#F59E0B",
+            "#3B82F6",
+            "#10B981",
+            "#8B5CF6",
+            "#EC4899",
+            "#64748B",
+        ]
+
+        for idx_c, l_col in enumerate(available_loss_cols):
+            fig_stacked_loss.add_trace(
+                go.Bar(
+                    name=l_col,
+                    x=df_line_losses.index,
+                    y=df_line_losses[l_col],
+                    marker_color=colors_palette[idx_c % len(colors_palette)],
+                )
+            )
+
+        fig_stacked_loss.update_layout(
+            barmode="stack",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#9CA3AF"),
+            xaxis=dict(tickangle=-35),
+            yaxis=dict(title="Durasi Kerugian (Menit)"),
+            height=380,
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+            ),
+        )
+        st.plotly_chart(fig_stacked_loss, use_container_width=True)
 
         st.markdown("---")
 

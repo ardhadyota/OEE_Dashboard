@@ -217,6 +217,9 @@ if uploaded_file is not None:
     try:
         df = pd.read_excel(uploaded_file, sheet_name="Data Daily")
 
+        # Bersihkan nama kolom Excel dari spasi liar/newline
+        df.columns = [str(c).strip() for c in df.columns]
+
         required_cols = [
             "Tgl",
             "LineID",
@@ -511,14 +514,13 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (EXPLICIT COLUMNS)
+        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES (SUM BARIS PRESISI)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
 
-        # Daftar eksplisit nama kolom Six Big Losses sesuai dengan file Excel Anda
         EXPLICIT_LOSS_COLS = [
             "Unplanned Downtime",
             "Setup & Adjustment",
@@ -529,33 +531,47 @@ if uploaded_file is not None:
             "Planned Shutdown (Non-OEE)",
         ]
 
-        # Ambil hanya kolom yang terdapat pada sheet Excel yang diunggah
+        # Ambil kolom yang benar-benar ada di data
         available_loss_cols = [
             col for col in EXPLICIT_LOSS_COLS if col in df_filtered.columns
         ]
 
-        loss_sums = pd.DataFrame()
+        loss_data = {}
+        for col in available_loss_cols:
+            # Konversi string desimal berkoma jika ada (misal: "12,02" -> 12.02)
+            series_clean = df_filtered[col]
+            if series_clean.dtype == "object":
+                series_clean = (
+                    series_clean.astype(str)
+                    .str.replace(",", ".")
+                    .str.strip()
+                )
 
-        if available_loss_cols:
-            # Konversi data ke numerik untuk menghindari kesalahan perbandingan teks/angka
-            df_losses_numeric = df_filtered[available_loss_cols].apply(
-                lambda c: pd.to_numeric(c, errors="coerce")
-            ).fillna(0)
+            # Penjumlahan presisi seluruh nilai di baris bawah tiap kolom
+            total_val = pd.to_numeric(
+                series_clean, errors="coerce"
+            ).fillna(0).sum()
+            loss_data[col] = float(total_val)
 
-            loss_sums = df_losses_numeric.sum().reset_index()
-            loss_sums.columns = ["Penyebab_Losses", "Menit"]
-            loss_sums = loss_sums.sort_values(by="Menit", ascending=False)
+        # Buat dataframe hasil penjumlahan baris
+        loss_sums = pd.DataFrame(
+            list(loss_data.items()), columns=["Penyebab_Losses", "Menit"]
+        )
 
-        # Jika kolom tidak ditemukan sama sekali di Excel
-        if loss_sums.empty:
-            loss_sums = pd.DataFrame(
-                {
-                    "Penyebab_Losses": EXPLICIT_LOSS_COLS,
-                    "Menit": [0] * len(EXPLICIT_LOSS_COLS),
-                }
+        # Jika ada kolom dari standar 7 yang tidak ada di Excel, isi dengan 0
+        missing_explicit = [
+            c for c in EXPLICIT_LOSS_COLS if c not in loss_sums["Penyebab_Losses"].values
+        ]
+        if missing_explicit:
+            df_missing = pd.DataFrame(
+                {"Penyebab_Losses": missing_explicit, "Menit": [0.0] * len(missing_explicit)}
             )
+            loss_sums = pd.concat([loss_sums, df_missing], ignore_index=True)
 
-        # Hitung kumulatif Pareto (%)
+        # Urutkan dari durasi menit tertinggi ke terkecil
+        loss_sums = loss_sums.sort_values(by="Menit", ascending=False).reset_index(drop=True)
+
+        # Hitung akumulasi persen Pareto
         loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
         total_loss_min = loss_sums["Menit"].sum()
 
@@ -579,7 +595,10 @@ if uploaded_file is not None:
                     y=loss_sums["Menit"],
                     name="Durasi (Menit)",
                     marker_color="#EF4444",
-                    text=[f"{m:,.2f}m" if m % 1 != 0 else f"{m:,.0f}m" for m in loss_sums["Menit"]],
+                    text=[
+                        f"{m:,.2f}m" if m % 1 != 0 else f"{m:,.0f}m"
+                        for m in loss_sums["Menit"]
+                    ],
                     textposition="outside",
                 ),
                 secondary_y=False,

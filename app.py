@@ -120,7 +120,7 @@ def load_or_init_action_plan():
         return df_init
 
 
-# FUNGSI PENENTU STATUS KESEHATAN LINE
+# FUNGSI PENENTU STATUS LINE
 def get_health_status(oee_actual, oee_target):
     if oee_actual < (oee_target - 5.0):
         return "🔴 Critical Alert", "critical"
@@ -260,7 +260,7 @@ uploaded_file = st.sidebar.file_uploader(
 st.markdown(
     """
     <div class="dashboard-header">
-        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
+        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Operasional</p></div>
         <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
     </div>
 """,
@@ -376,14 +376,14 @@ if uploaded_file is not None:
         )
 
         # -------------------------------------------------------------
-        # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
+        # SEKSI A: EXECUTIVE SUMMARY & STATUS LINE
         # -------------------------------------------------------------
         st.markdown(
-            '<div class="section-title">A. Executive Summary — Status Kesehatan Line & Pencapaian Tahunan</div>',
+            '<div class="section-title">A. Executive Summary — Status Line & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 
-        # REKAP STATUS KESEHATAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
+        # REKAP STATUS SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
         filtered_df_time["Target_Line"] = filtered_df_time["LineID"].apply(
             lambda x: get_target_by_line(x)["oee"]
         )
@@ -494,21 +494,21 @@ if uploaded_file is not None:
 
         if status_type == "critical":
             st.error(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
                 f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
+                f"Catatan Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
         elif status_type == "warning":
             st.warning(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
                 f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
+                f"Catatan Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
             )
         else:
             st.success(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
                 f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Mandat Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
+                f"Catatan Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
 
         st.markdown("---")
@@ -552,7 +552,7 @@ if uploaded_file is not None:
 
         with col_left:
             st.markdown(
-                '<div class="section-title">Benchmark Target vs Aktual</div>',
+                '<div class="section-title">B. Benchmark Target vs Aktual</div>',
                 unsafe_allow_html=True,
             )
             df_overall_comp = pd.DataFrame(
@@ -589,7 +589,7 @@ if uploaded_file is not None:
 
         with col_right:
             st.markdown(
-                '<div class="section-title">Daftar Status Kesehatan Line Produksi</div>',
+                '<div class="section-title">Daftar Status Line Produksi</div>',
                 unsafe_allow_html=True,
             )
             if selected_line != "Semua Line":
@@ -614,7 +614,7 @@ if uploaded_file is not None:
                     .reset_index()
                 )
 
-                line_summary["Status Kesehatan"], _ = zip(
+                line_summary["Status"], _ = zip(
                     *line_summary.apply(
                         lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
                         axis=1,
@@ -625,7 +625,7 @@ if uploaded_file is not None:
                 line_summary = line_summary.sort_values(by="Gap", ascending=True)
 
                 display_tbl = line_summary[
-                    ["Status Kesehatan", "LineID", "Target_Line", "OEE_pct", "Gap"]
+                    ["Status", "LineID", "Target_Line", "OEE_pct", "Gap"]
                 ].copy()
                 display_tbl.columns = [
                     "Status",
@@ -651,7 +651,7 @@ if uploaded_file is not None:
 
         # PARETO ANALYSIS GLOBAL
         st.markdown(
-            '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
+            '<div class="section-title">C. Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
 
@@ -993,7 +993,7 @@ if uploaded_file is not None:
 
         with st.container():
             st.markdown('<div class="sim-card">', unsafe_allow_html=True)
-            st.markdown("#### 🎯 Simulasi Dampak Pengurangan Downtime Terhadap OEE")
+            st.markdown("#### Simulasi Dampak Pengurangan Downtime Terhadap OEE")
             
             sim_col_input, sim_col_output = st.columns([1, 1.2])
 
@@ -1152,7 +1152,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                     line_target = st.selectbox("Line Produksi", sorted_lines)
                 with f_col2:
                     tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
-                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
+                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Ardha (Prod) / Anwar (Mtc)")
                 with f_col3:
                     target_selesai = st.date_input("Target Selesai")
                     status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])

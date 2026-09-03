@@ -798,7 +798,7 @@ if uploaded_file is not None:
 
         # BREAKDOWN SIX BIG LOSSES PER LINE
         st.markdown(
-            '<div class="section-title">Matrix Breakdown Six Big Losses per Line & Prioritas Perbaikan</div>',
+            '<div class="section-title">D. Matrix Breakdown Six Big Losses per Line & Prioritas Perbaikan</div>',
             unsafe_allow_html=True,
         )
 
@@ -873,7 +873,7 @@ if uploaded_file is not None:
 
         # RATIO PENCAPAIAN
         st.markdown(
-            '<div class="section-title">Ratio Pencapaian per Line [Ratio]</div>',
+            '<div class="section-title">E. Ratio Pencapaian per Line [Ratio]</div>',
             unsafe_allow_html=True,
         )
         df_line_ratio = (
@@ -945,7 +945,7 @@ if uploaded_file is not None:
 
         # TREND HARIAN
         st.markdown(
-            f'<div class="section-title">Tren Pergerakan OEE Harian Line {selected_line}</div>',
+            f'<div class="section-title">F. Tren Pencapaian OEE Harian Line {selected_line}</div>',
             unsafe_allow_html=True,
         )
         df_daily = (
@@ -987,7 +987,7 @@ if uploaded_file is not None:
         # SEKSI KALKULATOR SIMULASI WHAT-IF
         st.markdown("---")
         st.markdown(
-            '<div class="section-title">Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
+            '<div class="section-title">G. Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
             unsafe_allow_html=True,
         )
 

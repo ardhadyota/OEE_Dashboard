@@ -74,7 +74,7 @@ def load_or_init_monthly_summary():
         return df_init
 
 
-# 3. KAMUS TARGET SPESIFIK
+# 3. KAMUS TARGET SPESIFIK LINE
 LINE_STANDARDS = {
     "BUTYL TAPE LINE 1": {
         "avail": 99.0,
@@ -179,6 +179,7 @@ def get_target_by_line(line_name):
     return DEFAULT_OVERALL_STD
 
 
+# SIDEBAR LOGO & CONTROLS
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_b64 = base64.b64encode(f.read()).decode()
@@ -234,7 +235,6 @@ if uploaded_file is not None:
         df["Tgl"] = pd.to_datetime(df["Tgl"], errors="coerce")
         df = df.dropna(subset=["Tgl"]).sort_values(by="Tgl")
 
-        # Konversi kolom utama OEE ke numerik
         for col in ["OEE", "Avail", "% Performance", "Quality"]:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
@@ -257,6 +257,7 @@ if uploaded_file is not None:
         ] = avg_monthly_all_lines
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
+        # SEKSI A: EXECUTIVE SUMMARY
         st.markdown(
             '<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>',
             unsafe_allow_html=True,
@@ -510,42 +511,58 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (PERBAIKAN)
+        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (EXPLICIT)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
 
-        possible_loss_cols = [
-            col
-            for col in df_filtered.columns
-            if any(
-                keyword in col.lower()
-                for keyword in [
-                    "breakdown",
-                    "setup",
-                    "waiting",
-                    "minor",
-                    "speed",
-                    "reject",
-                    "rework",
-                    "loss",
-                    "downtime",
-                ]
-            )
+        # Filter kata kunci kolom kalkulasi/summary agar TIDAK ikut terhitung di Pareto
+        EXCLUDE_KEYWORDS = [
+            "pencapaian",
+            "hitungan",
+            "tercatat",
+            "aktual downtime",
+            "loss_waktu_prod",
+            "prosentase",
+            "selisih",
+            "total",
+            "target",
+            "oee",
+            "avail",
+            "performance",
+            "quality",
+            "tgl",
+            "lineid",
+            "ratio",
+            "oee_pct",
+            "avail_pct",
+            "perf_pct",
+            "qual_pct",
         ]
+
+        # Ambil kolom Excel yang murni merupakan variabel kerugian (Six Big Losses)
+        six_big_loss_cols = []
+        for c in df_filtered.columns:
+            c_lower = str(c).strip().lower()
+            if not any(ex in c_lower for ex in EXCLUDE_KEYWORDS):
+                six_big_loss_cols.append(c)
 
         loss_sums = pd.DataFrame()
 
-        if possible_loss_cols:
-            # Konversi semua kolom kandidat ke tipe data numerik
-            df_losses_numeric = df_filtered[possible_loss_cols].apply(
+        if six_big_loss_cols:
+            # Konversi nilai ke numerik
+            df_losses_numeric = df_filtered[six_big_loss_cols].apply(
                 lambda c: pd.to_numeric(c, errors="coerce")
             ).fillna(0)
 
-            # Filter hanya kolom yang angka dan total menitnya > 0 (mengabaikan kolom deskripsi teks)
-            valid_cols = [col for col in possible_loss_cols if df_losses_numeric[col].sum() > 0]
+            # Ambil kolom yang total menitnya > 0
+            valid_cols = [
+                col
+                for col in six_big_loss_cols
+                if df_losses_numeric[col].sum() > 0
+            ]
 
             if valid_cols:
                 loss_sums = (
@@ -554,28 +571,32 @@ if uploaded_file is not None:
                 loss_sums.columns = ["Penyebab_Losses", "Menit"]
                 loss_sums = loss_sums.sort_values(by="Menit", ascending=False)
 
-        # Gunakan fallback jika tidak ada kolom losses berformat angka di Excel
+        # Fallback jika tidak ditemukan kolom yang sesuai
         if loss_sums.empty:
             loss_sums = pd.DataFrame(
                 {
                     "Penyebab_Losses": [
-                        "Unplanned Machine Breakdown",
-                        "Setup & Adjustment Mould",
-                        "Waiting Material / Raw Material Delay",
-                        "Minor Stops & Chokutei",
-                        "Reduced Speed / Sub-optimal Operation",
-                        "Process Defect & Quality Rework",
+                        "Unplanned Downtime / Breakdown",
+                        "Setup & Adjustments",
+                        "Idling & Minor Stops",
+                        "Reduced Speed",
+                        "Process Defects & Rework",
+                        "Startup Losses",
                     ],
-                    "Menit": [240, 150, 90, 45, 30, 15],
+                    "Menit": [0, 0, 0, 0, 0, 0],
                 }
-            ).sort_values(by="Menit", ascending=False)
+            )
 
         # Hitung Pareto kumulatif %
         loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
         total_loss_min = loss_sums["Menit"].sum()
-        loss_sums["Kumulatif_Pct"] = (
-            loss_sums["Kumulatif_Menit"] / total_loss_min
-        ) * 100
+
+        if total_loss_min > 0:
+            loss_sums["Kumulatif_Pct"] = (
+                loss_sums["Kumulatif_Menit"] / total_loss_min
+            ) * 100
+        else:
+            loss_sums["Kumulatif_Pct"] = 0.0
 
         top_5_losses = loss_sums.head(5)
 
@@ -590,7 +611,7 @@ if uploaded_file is not None:
                     y=loss_sums["Menit"],
                     name="Durasi (Menit)",
                     marker_color="#EF4444",
-                    text=[f"{m:.0f}m" for m in loss_sums["Menit"]],
+                    text=[f"{m:,.0f}m" for m in loss_sums["Menit"]],
                     textposition="outside",
                 ),
                 secondary_y=False,
@@ -658,12 +679,17 @@ if uploaded_file is not None:
 
             st.dataframe(top_5_display, use_container_width=True)
 
-            st.caption(
-                f"**Total Kerugian Operasional:** {total_loss_min:,.0f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top_5_losses['Kumulatif_Pct'].iloc[min(2, len(top_5_losses)-1)]:.1f}%** dari total seluruh kendala lini produksi."
-            )
+            if total_loss_min > 0:
+                top3_pct = top_5_losses["Kumulatif_Pct"].iloc[
+                    min(2, len(top_5_losses) - 1)
+                ]
+                st.caption(
+                    f"**Total Kerugian Operasional:** {total_loss_min:,.0f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
+                )
 
         st.markdown("---")
 
+        # SEKSI RATIO PENCAPAIAN
         st.markdown(
             '<div class="section-title">Ratio Pencapaian per Line [Ratio]</div>',
             unsafe_allow_html=True,
@@ -735,6 +761,7 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
+        # SEKSI TREND HARIAN
         st.markdown(
             f'<div class="section-title">Tren Pergerakan OEE Harian Line {selected_line}</div>',
             unsafe_allow_html=True,
@@ -775,6 +802,7 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
+        # SEKSI DIAGNOSIS AI
         st.markdown(
             '<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
             unsafe_allow_html=True,

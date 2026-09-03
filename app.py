@@ -218,6 +218,139 @@ if uploaded_file is not None:
         diff_avail = avg_avail - active_std['avail']
         diff_perf = avg_perf - active_std['perf']
         diff_qual = avg_qual - active_std['qual']
+        # ---------------------------------------------------------------------
+        # HEADER ALERT STATUS — EXECUTIVE CONTROL BADGE (PROFESSIONAL DESIGN)
+        # ---------------------------------------------------------------------
+        gap_oee = avg_oee - active_std['oee']
+
+        # Logika Penentuan Status & Tema Visual
+        if gap_oee < -3.0:
+            status_theme = {
+                "bg": "linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(127, 29, 29, 0.25) 100%)",
+                "border": "rgba(239, 68, 68, 0.4)",
+                "glow": "rgba(239, 68, 68, 0.2)",
+                "badge_bg": "#EF4444",
+                "badge_text": "#FFFFFF",
+                "title_color": "#FCA5A5",
+                "label": "CRITICAL ALERT",
+                "desc": "OEE Mengalami Defisit Signifikan Dari Target Line",
+                "mandate": "Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi operasional darurat."
+            }
+        elif gap_oee < 0:
+            status_theme = {
+                "bg": "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(120, 53, 15, 0.25) 100%)",
+                "border": "rgba(245, 158, 11, 0.4)",
+                "glow": "rgba(245, 158, 11, 0.2)",
+                "badge_bg": "#F59E0B",
+                "badge_text": "#000000",
+                "title_color": "#FCD34D",
+                "label": "WARNING",
+                "desc": "OEE Belum Mencapai Target Spesifik Lini",
+                "mandate": "Dibutuhkan perhatian ekstra dari Supervisor & evaluasi harian pada akar masalah utama."
+            }
+        else:
+            status_theme = {
+                "bg": "linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.25) 100%)",
+                "border": "rgba(16, 185, 129, 0.4)",
+                "glow": "rgba(16, 185, 129, 0.2)",
+                "badge_bg": "#10B981",
+                "badge_text": "#FFFFFF",
+                "title_color": "#6EE7B7",
+                "label": "ON TRACK",
+                "desc": "Performa Operasional Memenuhi / Melebihi Target Standard",
+                "mandate": "Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar."
+            }
+
+        st.markdown(f"""
+        <style>
+            @keyframes pulse-glow {{
+                0% {{ box-shadow: 0 0 0 0 {status_theme['glow']}; }}
+                70% {{ box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }}
+                100% {{ box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }}
+            }}
+            .pulse-dot {{
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: {status_theme['badge_bg']};
+                margin-right: 8px;
+                animation: pulse-glow 2s infinite;
+            }}
+        </style>
+
+        <div style="
+            background: {status_theme['bg']};
+            border: 1px solid {status_theme['border']};
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;">
+            
+            <!-- Sisi Kiri: Status Badge & Deskripsi -->
+            <div style="flex: 1 1 500px;">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <span class="pulse-dot"></span>
+                    <span style="
+                        background-color: {status_theme['badge_bg']};
+                        color: {status_theme['badge_text']};
+                        font-size: 0.75rem;
+                        font-weight: 800;
+                        padding: 3px 10px;
+                        border-radius: 6px;
+                        letter-spacing: 1px;
+                        text-transform: uppercase;">
+                        SYSTEM STATUS: {status_theme['label']}
+                    </span>
+                    <span style="color: #9CA3AF; font-size: 0.85rem; margin-left: 12px;">
+                        Line: <strong style="color: #F3F4F6;">{selected_line}</strong>
+                    </span>
+                </div>
+                
+                <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 700; color: {status_theme['title_color']};">
+                    {status_theme['desc']}
+                </h3>
+                
+                <p style="margin: 0; font-size: 0.88rem; color: #CBD5E1; line-height: 1.4;">
+                    <strong style="color: #94A3B8; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Mandat Operasional:</strong> 
+                    {status_theme['mandate']}
+                </p>
+            </div>
+
+            <!-- Sisi Kanan: Statistik Ringkas -->
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 24px;
+                background: rgba(15, 23, 42, 0.6);
+                padding: 12px 20px;
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.05);">
+                
+                <div style="text-align: right;">
+                    <div style="font-size: 0.72rem; color: #9CA3AF; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">OEE Aktual</div>
+                    <div style="font-size: 1.75rem; font-weight: 800; color: #FFFFFF; line-height: 1.1;">{avg_oee:.2f}<span style="font-size: 1rem; color: #9CA3AF;">%</span></div>
+                </div>
+
+                <div style="height: 32px; width: 1px; background-color: rgba(255, 255, 255, 0.1);"></div>
+
+                <div style="text-align: left;">
+                    <div style="font-size: 0.72rem; color: #9CA3AF; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Target Line</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #38BDF8; line-height: 1.1;">{active_std['oee']:.2f}<span style="font-size: 0.85rem; color: #9CA3AF;">%</span></div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: {'#EF4444' if gap_oee < 0 else '#10B981'};">
+                        {gap_oee:+.2f}% Gap
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        """, unsafe_allow_html=True)
 
         def get_badge_html(diff, target_text):
             if diff >= 0:

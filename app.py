@@ -332,6 +332,9 @@ if uploaded_file is not None:
         # ---------------------------------------------------------------------
         # STRATEGI MANAJEMEN (MAIN KPI -> SUB KPI -> PROSES KPI)
         # ---------------------------------------------------------------------
+        # ---------------------------------------------------------------------
+        # STRATEGI MANAJEMEN (MAIN KPI -> SUB KPI -> PROSES KPI)
+        # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">Peta Strategi Manajemen (KPI Alignment)</div>', unsafe_allow_html=True)
 
         st.markdown(f"""
@@ -344,68 +347,87 @@ if uploaded_file is not None:
         """, unsafe_allow_html=True)
 
         # ---------------------------------------------------------------------
-        # AI DIAGNOSIS ENGINE & MATRIKS PRIORITAS PERBAIKAN
+        # AI PARETO ANALYSIS & SPESIFIK TEMA IMPROVEMENT
         # ---------------------------------------------------------------------
-        st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa Line: ' + str(selected_line) + '</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">AI Pareto Recommendation & Specific Improvement Theme</div>', unsafe_allow_html=True)
         
-        # Hitung defisit (Target - Aktual). Nilai positif artinya bermasalah (di bawah target).
+        # 1. Analisis Defisit Faktor
+        def_avail = active_std['avail'] - avg_avail
+        def_perf = active_std['perf'] - avg_perf
+        def_qual = active_std['qual'] - avg_qual
+
         factor_details = {
             "Availability": {
-                "defisit": active_std['avail'] - avg_avail, 
+                "defisit": def_avail, 
                 "actual": avg_avail, 
                 "target": active_std['avail'], 
-                "proses_kpi_desc": "Meningkatkan Operational Uptime & Menekan Downtime",
-                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED)."
+                "loss_category": "Breakdown & Setup Losses (Downtime)",
+                "theme_template": "Penerapan Autonomous Maintenance & Reduksi Breakdown pada Engine / Mold Line",
+                "action_steps": [
+                    "Lakukan analisis Root Cause (5-Why Analysis) pada penyebab utama unplanned breakdown.",
+                    "Terapkan metode SMED (Single-Minute Exchange of Die) untuk memotong waktu pergantian cetakan.",
+                    "Buat Standard Operating Procedure (SOP) pelumasan & inspeksi harian oleh operator."
+                ]
             },
             "Performance": {
-                "defisit": active_std['perf'] - avg_perf, 
+                "defisit": def_perf, 
                 "actual": avg_perf, 
                 "target": active_std['perf'], 
-                "proses_kpi_desc": "Menjaga Kecepatan Standar Mesin & Menghindari Micro-Stoppages",
-                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops)."
+                "loss_category": "Speed Loss & Micro Stoppages (Minor Stops)",
+                "theme_template": "Eliminasi Speed Loss & Penyetelan Standar Parameter Kecepatan Mesin",
+                "action_steps": [
+                    "Identifikasi titik bottle-neck atau gesekan mekanis yang menyebabkan mesin diturunkan kecepatannya.",
+                    "Lakukan pembersihan dan pencatatan riwayat minor stops (>5 detik hingga 5 menit).",
+                    "Kunci (*lock*) parameter kecepatan ideal pada layar control panel agar tidak diubah tanpa otorisasi."
+                ]
             },
             "Quality": {
-                "defisit": active_std['qual'] - avg_qual, 
+                "defisit": def_qual, 
                 "actual": avg_qual, 
                 "target": active_std['qual'], 
-                "proses_kpi_desc": "Menjaga Mutu Material & Meminimalkan Reject / Rework",
-                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses."
+                "loss_category": "Defect & Scrap Losses (Reject Rate)",
+                "theme_template": "Peningkatan Quality Rate Melalui Kontrol Parameter Input Material & Mold Setup",
+                "action_steps": [
+                    "Tingkatkan standar penerimaan inspeksi bahan baku sebelum masuk ke saluran feeder.",
+                    "Lakukan kalibrasi ulang pada temperatur dan tekanan proses secara berkala.",
+                    "Terapkan mekanisme Poka-Yoke (sistem anti-salah) pada stasiun kerja utama."
+                ]
             }
         }
 
-        # Filter hanya faktor yang punya defisit > 0 (di bawah target) dan urutkan dari defisit terbesar
+        # Filter hanya faktor yang memiliki defisit > 0 (di bawah target) dan urutkan berdasarkan Pareto (defisit terbesar)
         problem_factors = [
             (name, data) for name, data in factor_details.items() if data["defisit"] > 0.001
         ]
         problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
         if problem_factors:
-            p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki Proses KPI pada Indikator {p1_name}!"
-            desc_status = f"Pada **{selected_line}**, faktor **{p1_name}** merupakan titik penyumbang defisit terbesar yaitu **-{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+            top_problem_name, top_problem_data = problem_factors[0]
             
-            prioritas_text = ""
-            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target: {fdata['target']:.2f}%)\n"
-                prioritas_text += f"   - **Fokus Proses KPI:** {fdata['proses_kpi_desc']}\n"
-                prioritas_text += f"   - **Rekomendasi Tindakan:** {fdata['action']}\n\n"
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #2D1522 0%, #111827 100%); border: 1px solid #EF4444; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h3 style="color: #F87171; margin-top:0;">🔥 PARETO PROBLEM UTAMA: {top_problem_name.upper()}</h3>
+                <p style="font-size: 1.05rem; color: #F3F4F6;">
+                    Berdasarkan analisis Pareto, faktor <strong>{top_problem_name}</strong> memberikan dampak penurunan OEE terbesar pada <strong>{selected_line}</strong> dengan defisit sebesar <strong style="color:#F87171;">-{top_problem_data['defisit']:.2f}%</strong> (Aktual: {top_problem_data['actual']:.2f}% vs Target: {top_problem_data['target']:.2f}%).
+                </p>
+                <hr style="border-color: rgba(255,255,255,0.1);">
+                <h4 style="color: #38BDF8; margin-bottom: 8px;">💡 REKOMENDASI TEMA IMPROVEMENT SPESIFIK (QCC / KAIZEN):</h4>
+                <p style="font-size: 1.2rem; font-weight: bold; color: #FACC15;">
+                    "<u>{top_problem_data['theme_template']} pada {selected_line}</u>"
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown("#### 📌 Langkah-Langkah Eksekusi Improvement (Action Plan):")
+            for i, step in enumerate(top_problem_data['action_steps'], start=1):
+                st.markdown(f"**{i}.** {step}")
+
+            if len(problem_factors) > 1:
+                st.markdown("<br><b>Urutan Sekunder Pareto Problem Lainnya:</b>", unsafe_allow_html=True)
+                for idx, (fname, fdata) in enumerate(problem_factors[1:], start=2):
+                    st.markdown(f"* **Prioritas {idx} ({fname}):** Defisit -{fdata['defisit']:.2f}% — *Kategori: {fdata['loss_category']}*")
         else:
-            header_status = "Seluruh Proses KPI pada Line Ini Memenuhi Standar!"
-            desc_status = f"Luar biasa! Semua indikator proses (Availability, Performance, Quality) pada **{selected_line}** telah mencapai atau melampaui target spesifiknya."
-            prioritas_text = "Seluruh Proses KPI terpenuhi. Pertahankan ritme kerja dan jalankan perawatan rutin (Preventive Maintenance)."
-
-        st.markdown(f"""
-### Laporan Diagnosis AI: {selected_line}
-* **Status Main KPI OEE saat ini:** **{avg_oee:.2f}%** (Target Spesifik Line: **{active_std['oee']:.2f}%**)
-
----
-
-#### 📌 Rekomendasi Strategi Utama: {header_status}
-{desc_status}
-
-#### 📋 Urutan Matriks Prioritas Perbaikan Proses KPI:
-{prioritas_text}
-""")
+            st.success(f"🎉 **Tidak Ada Pareto Problem!** Seluruh faktor OEE pada **{selected_line}** sudah memenuhi atau melebihi target spesifik. Fokus kegiatan saat ini adalah **Standardization & Preventive Maintenance**.")
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 

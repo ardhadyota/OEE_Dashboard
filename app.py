@@ -347,45 +347,36 @@ if uploaded_file is not None:
 
         gap_oee = avg_oee - active_std["oee"]
 
+       # === KODE BARU (Tempel di sini) ===
         if gap_oee < -3.0:
-            status_theme = {
-                "bg": "linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(127, 29, 29, 0.25) 100%)",
-                "border": "rgba(239, 68, 68, 0.4)",
-                "glow": "rgba(239, 68, 68, 0.2)",
-                "badge_bg": "#EF4444",
-                "badge_text": "#FFFFFF",
-                "title_color": "#FCA5A5",
-                "label": "CRITICAL ALERT",
-                "desc": "OEE Mengalami Defisit Signifikan Dari Target Line",
-                "mandate": "Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi operasional darurat.",
-            }
+            st.error(
+                f"**SYSTEM STATUS: CRITICAL ALERT — Line: {selected_line}**\n\n"
+                f"**OEE Mengalami Defisit Signifikan Dari Target Line**\n\n"
+                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi operasional darurat."
+            )
         elif gap_oee < 0:
-            status_theme = {
-                "bg": "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(120, 53, 15, 0.25) 100%)",
-                "border": "rgba(245, 158, 11, 0.4)",
-                "glow": "rgba(245, 158, 11, 0.2)",
-                "badge_bg": "#F59E0B",
-                "badge_text": "#000000",
-                "title_color": "#FCD34D",
-                "label": "WARNING",
-                "desc": "OEE Belum Mencapai Target Spesifik Lini",
-                "mandate": "Dibutuhkan perhatian ekstra dari Supervisor & evaluasi harian pada akar masalah utama.",
-            }
+            st.warning(
+                f"**SYSTEM STATUS: WARNING — Line: {selected_line}**\n\n"
+                f"**OEE Belum Mencapai Target Spesifik Lini**\n\n"
+                f"Mandat Operasional: Dibutuhkan perhatian ekstra dari Supervisor & evaluasi harian pada akar masalah utama."
+            )
         else:
-            status_theme = {
-                "bg": "linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.25) 100%)",
-                "border": "rgba(16, 185, 129, 0.4)",
-                "glow": "rgba(16, 185, 129, 0.2)",
-                "badge_bg": "#10B981",
-                "badge_text": "#FFFFFF",
-                "title_color": "#6EE7B7",
-                "label": "ON TRACK",
-                "desc": "Performa Operasional Memenuhi / Melebihi Target Standard",
-                "mandate": "Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar.",
-            }
+            st.success(
+                f"**SYSTEM STATUS: ON TRACK — Line: {selected_line}**\n\n"
+                f"**Performa Operasional Memenuhi / Melebihi Target Standard**\n\n"
+                f"Mandat Operasional: Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar."
+            )
 
-        st.markdown(
-            f"""
+        col_m1, col_m2 = st.columns(2)
+        col_m1.metric(
+            label="OEE AKTUAL",
+            value=f"{avg_oee:.2f}%",
+            delta=f"{gap_oee:+.2f}% Gap",
+        )
+        col_m2.metric(label="TARGET LINE", value=f"{active_std['oee']:.2f}%")
+
+        st.markdown("---")
+
         <style>
             @keyframes pulse-glow {{
                 0% {{ box-shadow: 0 0 0 0 {status_theme['glow']}; }}

@@ -47,8 +47,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. DATABASE REKAP TAHUNAN OTOMATIS
+# 2. DATABASE REKAP TAHUNAN & PDCA ACTION PLAN
 SUMMARY_FILE = "oee_monthly_summary.csv"
+ACTION_PLAN_FILE = "action_plan_pdca.csv"
 
 
 def load_or_init_monthly_summary():
@@ -71,6 +72,23 @@ def load_or_init_monthly_summary():
     else:
         df_init = pd.DataFrame({"Bulan": months, "OEE_Aktual": [None] * 12})
         df_init.to_csv(SUMMARY_FILE, index=False)
+        return df_init
+
+
+def load_or_init_action_plan():
+    cols = [
+        "Tanggal Inisiasi",
+        "Line Produksi",
+        "Tema Improvement",
+        "PIC",
+        "Target Selesai",
+        "Status",
+    ]
+    if os.path.exists(ACTION_PLAN_FILE):
+        return pd.read_csv(ACTION_PLAN_FILE)
+    else:
+        df_init = pd.DataFrame(columns=cols)
+        df_init.to_csv(ACTION_PLAN_FILE, index=False)
         return df_init
 
 
@@ -512,9 +530,7 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # =========================================================
-        # SEKSI PARETO ANALYSIS GLOBAL (HASIL DIBULATKAN TANPA KOMA)
-        # =========================================================
+        # PARETO ANALYSIS GLOBAL
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
@@ -524,7 +540,7 @@ if uploaded_file is not None:
             "Unplanned Downtime",
             "Setup & Adjustment",
             "Idling & Minor Stops",
-            "Slow Cycles",
+            "Reduced Speed",
             "Process Defects",
             "Startup Losses",
             "Planned Shutdown (Non-OEE)",
@@ -534,7 +550,6 @@ if uploaded_file is not None:
             col for col in EXPLICIT_LOSS_COLS if col in df_filtered.columns
         ]
 
-        # Konversi tipe data losses jika string berkoma
         for col in available_loss_cols:
             if df[col].dtype == "object":
                 df[col] = (
@@ -669,26 +684,20 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # =========================================================
-        # SEKSI BARU: BREAKDOWN SIX BIG LOSSES PER LINE (PRIORITAS REPARASI)
-        # =========================================================
+        # BREAKDOWN SIX BIG LOSSES PER LINE
         st.markdown(
             '<div class="section-title">Matrix Breakdown Six Big Losses per Line & Prioritas Perbaikan</div>',
             unsafe_allow_html=True,
         )
 
-        # Hitung sum per line untuk tiap kolom losses
         df_line_losses = df.groupby("LineID")[available_loss_cols].sum()
-        # Pembulatan bulat utuh
         df_line_losses = df_line_losses.round(0).astype(int)
 
-        # Tambahkan Total Losses per Line
         df_line_losses["TOTAL_LOSSES"] = df_line_losses.sum(axis=1)
         df_line_losses = df_line_losses.sort_values(
             by="TOTAL_LOSSES", ascending=False
         )
 
-        # Temukan loss terbesar dominan di masing-masing line
         top_cause_per_line = []
         for idx_line, row_l in df_line_losses.iterrows():
             causes_only = row_l.drop("TOTAL_LOSSES")
@@ -704,13 +713,11 @@ if uploaded_file is not None:
         df_line_losses_display = df_line_losses.copy()
         df_line_losses_display["Penyebab Utama Dominan"] = top_cause_per_line
 
-        # Format tampilan angka di tabel agar ada pemisah ribuan
         for c_col in available_loss_cols + ["TOTAL_LOSSES"]:
             df_line_losses_display[c_col] = df_line_losses_display[c_col].apply(
                 lambda x: f"{x:,}"
             )
 
-        # Susun urutan kolom tampilan
         ordered_cols = (
             ["TOTAL_LOSSES", "Penyebab Utama Dominan"] + available_loss_cols
         )
@@ -734,7 +741,6 @@ if uploaded_file is not None:
             worst_3_lines = df_line_losses.head(3)
 
             priority_html = ""
-            badges = ["badge-danger", "badge-danger", "badge-success"]
             for i, (l_name, l_row) in enumerate(worst_3_lines.iterrows(), 1):
                 tot_l = l_row["TOTAL_LOSSES"]
                 causes_only = l_row.drop("TOTAL_LOSSES")
@@ -751,7 +757,6 @@ if uploaded_file is not None:
 
             st.markdown(priority_html, unsafe_allow_html=True)
 
-        # GRAFIK STACKED BAR LOSSES PER LINE
         st.markdown(
             "<h4 style='color: #F3F4F6;'>Visualisasi Komposisi Kerugian per Line Produksi</h4>",
             unsafe_allow_html=True,
@@ -794,7 +799,7 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # SEKSI RATIO PENCAPAIAN
+        # RATIO PENCAPAIAN
         st.markdown(
             '<div class="section-title">Ratio Pencapaian per Line [Ratio]</div>',
             unsafe_allow_html=True,
@@ -866,7 +871,7 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # SEKSI TREND HARIAN
+        # TREND HARIAN
         st.markdown(
             f'<div class="section-title">Tren Pergerakan OEE Harian Line {selected_line}</div>',
             unsafe_allow_html=True,
@@ -907,7 +912,7 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # SEKSI DIAGNOSIS AI
+        # DIAGNOSIS AI
         st.markdown(
             '<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
             unsafe_allow_html=True,
@@ -973,6 +978,92 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         )
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
+
+        # =========================================================
+        # SEKSI BARU: TABEL MONITORING ACTION PLAN PDCA
+        # =========================================================
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
+            unsafe_allow_html=True,
+        )
+
+        df_action_plan = load_or_init_action_plan()
+
+        # FORM INPUT TAMBAH ACTION PLAN BARU
+        with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
+            with st.form("form_add_action_plan", clear_on_submit=True):
+                f_col1, f_col2, f_col3 = st.columns(3)
+                with f_col1:
+                    tgl_inisiasi = st.date_input("Tanggal Inisiasi")
+                    line_target = st.selectbox("Line Produksi", sorted_lines)
+                with f_col2:
+                    tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
+                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
+                with f_col3:
+                    target_selesai = st.date_input("Target Selesai")
+                    status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
+
+                btn_submit = st.form_submit_button("Simpan Action Plan")
+
+                if btn_submit:
+                    if tema_imp.strip() == "" or pic_name.strip() == "":
+                        st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
+                    else:
+                        new_row = pd.DataFrame(
+                            [{
+                                "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
+                                "Line Produksi": line_target,
+                                "Tema Improvement": tema_imp.strip(),
+                                "PIC": pic_name.strip(),
+                                "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
+                                "Status": status_initial
+                            }]
+                        )
+                        df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
+                        df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
+                        st.success("Action plan berhasil ditambahkan!")
+                        st.rerun()
+
+        # RINGKASAN METRIK STATUS PDCA
+        count_total = len(df_action_plan)
+        count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
+        count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
+        count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
+
+        st_c1, st_c2, st_c3, st_c4 = st.columns(4)
+        st_c1.metric("Total Action Plan", count_total)
+        st_c2.metric("Status: Done", count_done)
+        st_c3.metric("Status: On Progress", count_progress)
+        st_c4.metric("Status: Delay", count_delay)
+
+        # TABEL MONITORING INTERAKTIF (DATA EDITOR)
+        if not df_action_plan.empty:
+            st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
+            
+            edited_df = st.data_editor(
+                df_action_plan,
+                column_config={
+                    "Status": st.column_config.SelectboxColumn(
+                        "Status",
+                        help="Status Pekerjaan PDCA",
+                        options=["On Progress", "Done", "Delay"],
+                        required=True,
+                    ),
+                    "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
+                    "Target Selesai": st.column_config.DateColumn("Target Selesai"),
+                },
+                num_rows="dynamic",
+                use_container_width=True,
+                key="action_plan_editor"
+            )
+
+            if st.button("Simpan Perubahan Tabel Action Plan"):
+                edited_df.to_csv(ACTION_PLAN_FILE, index=False)
+                st.success("Perubahan Action Plan PDCA berhasil disimpan!")
+                st.rerun()
+        else:
+            st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")

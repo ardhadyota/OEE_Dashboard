@@ -871,105 +871,404 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # -------------------------------------------------------------
-        # SEKSI E: TREN OEE HARIAN & EKSPLORASI DATA
-        # -------------------------------------------------------------
+        # RATIO PENCAPAIAN
         st.markdown(
-            '<div class="section-title">E. Tren Performa OEE Harian & Komponen Utama</div>',
+            '<div class="section-title">E. Ratio Pencapaian per Line [Ratio]</div>',
             unsafe_allow_html=True,
         )
+        df_line_ratio = (
+            filtered_df_time.groupby("LineID")
+            .agg({"Target_Line": "first", "OEE_pct": "mean"})
+            .reset_index()
+        )
+        df_line_ratio["Target_Line"] = df_line_ratio["Target_Line"].replace(
+            0, 1
+        )
+        df_line_ratio["Ratio"] = (
+            df_line_ratio["OEE_pct"] / df_line_ratio["Target_Line"]
+        )
+        df_line_ratio["Selisih_pct"] = (
+            df_line_ratio["OEE_pct"] - df_line_ratio["Target_Line"]
+        )
+        df_line_ratio = df_line_ratio.sort_values(by="Ratio", ascending=False)
 
-        fig_daily = go.Figure()
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["OEE_pct"], mode="lines+markers", name="OEE (%)", line=dict(color="#38BDF8", width=2)))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Avail_pct"], mode="lines", name="Availability (%)", line=dict(color="#10B981", dash="dash")))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Perf_pct"], mode="lines", name="Performance (%)", line=dict(color="#F59E0B", dash="dash")))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Qual_pct"], mode="lines", name="Quality (%)", line=dict(color="#A855F7", dash="dash")))
+        ratio_colors = [
+            "#60A5FA" if r >= 1.0 else "#F87171" for r in df_line_ratio["Ratio"]
+        ]
 
-        fig_daily.update_layout(
+        fig_ratio = go.Figure()
+        hover_texts = [
+            f"<b>{line}</b><br>Target: {tgt:.2f}%<br>Aktual: {oee:.2f}%<br>Selisih: {sel:+.2f}%<br>Ratio: {r:.3f}"
+            for line, tgt, oee, sel, r in zip(
+                df_line_ratio["LineID"],
+                df_line_ratio["Target_Line"],
+                df_line_ratio["OEE_pct"],
+                df_line_ratio["Selisih_pct"],
+                df_line_ratio["Ratio"],
+            )
+        ]
+
+        fig_ratio.add_trace(
+            go.Bar(
+                x=df_line_ratio["LineID"],
+                y=df_line_ratio["Ratio"],
+                marker_color=ratio_colors,
+                text=[f"{r:.3f}" for r in df_line_ratio["Ratio"]],
+                textposition="outside",
+                hoverinfo="text",
+                hovertext=hover_texts,
+            )
+        )
+        fig_ratio.add_shape(
+            type="line",
+            x0=-0.5,
+            x1=len(df_line_ratio["LineID"]) - 0.5,
+            y0=1.0,
+            y1=1.0,
+            line=dict(color="#EF4444", width=3),
+        )
+        fig_ratio.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
             font=dict(color="#9CA3AF"),
-            xaxis=dict(title="Tanggal"),
-            yaxis=dict(title="Persentase (%)", range=[0, 105]),
-            height=380,
-            hovermode="x unified"
+            yaxis=dict(
+                title="[Ratio]",
+                range=[0, max(df_line_ratio["Ratio"].max() * 1.15, 1.3)],
+            ),
+            xaxis=dict(title="", tickangle=-45),
+            height=430,
+            showlegend=False,
         )
-        st.plotly_chart(fig_daily, use_container_width=True)
+        st.plotly_chart(fig_ratio, use_container_width=True)
 
         st.markdown("---")
 
-        # -------------------------------------------------------------
-        # SEKSI F: SIMULASI WHAT-IF OEE
-        # -------------------------------------------------------------
+        # TREND HARIAN
         st.markdown(
-            '<div class="section-title">F. Simulasi & Target Improvement OEE (What-If Analysis)</div>',
+            f'<div class="section-title">F. Tren Pencapaian OEE Harian Line {selected_line}</div>',
+            unsafe_allow_html=True,
+        )
+        df_daily = (
+            df_filtered.groupby("Tgl")["OEE_pct"].mean().reset_index()
+        )
+        df_daily["Tgl_Str"] = df_daily["Tgl"].dt.strftime("%d %b %Y")
+
+        fig_line = go.Figure()
+        fig_line.add_trace(
+            go.Scatter(
+                x=df_daily["Tgl_Str"],
+                y=df_daily["OEE_pct"],
+                mode="lines+markers",
+                line=dict(color="#10B981", width=3),
+                marker=dict(size=8, color="#34D399"),
+                text=[f"{val:.1f}%" for val in df_daily["OEE_pct"]],
+                hoverinfo="x+text",
+            )
+        )
+        fig_line.add_hline(
+            y=active_std["oee"],
+            line_dash="dash",
+            line_color="#EF4444",
+            line_width=2,
+            annotation_text=f"Target Line ({active_std['oee']:.2f}%)",
+            annotation_position="top right",
+        )
+        fig_line.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#9CA3AF"),
+            yaxis=dict(title="OEE (%)"),
+            xaxis=dict(title="Tanggal Produksi", type="category", tickangle=-45),
+            height=420,
+            showlegend=False,
+        )
+        st.plotly_chart(fig_line, use_container_width=True)
+
+        # SEKSI KALKULATOR SIMULASI WHAT-IF
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">G. Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
             unsafe_allow_html=True,
         )
 
-        st.markdown('<div class="sim-card">', unsafe_allow_html=True)
-        s_col1, s_col2, s_col3 = st.columns(3)
-        with s_col1:
-            sim_avail = st.slider("Simulasi Availability (%)", 0.0, 100.0, float(avg_avail), 0.1)
-        with s_col2:
-            sim_perf = st.slider("Simulasi Performance (%)", 0.0, 100.0, float(avg_perf), 0.1)
-        with s_col3:
-            sim_qual = st.slider("Simulasi Quality (%)", 0.0, 100.0, float(avg_qual), 0.1)
+        with st.container():
+            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
+            st.markdown("#### Simulasi Dampak Pengurangan Downtime Terhadap OEE")
+            
+            sim_col_input, sim_col_output = st.columns([1, 1.2])
 
-        sim_oee = (sim_avail / 100.0) * (sim_perf / 100.0) * (sim_qual / 100.0) * 100.0
-        delta_sim = sim_oee - avg_oee
+            with sim_col_input:
+                target_sim_line = st.selectbox(
+                    "Pilih Line untuk Simulasi:", 
+                    sorted_lines, 
+                    index=sorted_lines.index(selected_line) if selected_line in sorted_lines else 0,
+                    key="sim_line_select"
+                )
+                downtime_reduction_pct = st.slider(
+                    f"Target Pengurangan Unplanned Downtime (%):",
+                    min_value=0,
+                    max_value=100,
+                    value=20,
+                    step=5,
+                    help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
+                )
 
-        st.markdown(f"### Proyeksi OEE Hasil Simulasi: **{sim_oee:.2f}%** ({delta_sim:+.2f}% vs Aktual Saat Ini)")
-        st.markdown('</div>', unsafe_allow_html=True)
+                df_sim_line = df_filtered[df_filtered["LineID"] == target_sim_line] if selected_line == "Semua Line" else df_filtered
+                num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
+                
+                curr_line_oee = df_sim_line["OEE_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_avail = df_sim_line["Avail_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_perf = df_sim_line["Perf_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_qual = df_sim_line["Qual_pct"].mean() if not df_sim_line.empty else 0
+                target_line_oee = get_target_by_line(target_sim_line)["oee"]
+
+                total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0
+                dt_saved_min = total_unplanned_dt * (downtime_reduction_pct / 100.0)
+                remaining_dt_min = total_unplanned_dt - dt_saved_min
+
+                total_planned_operating_time = (num_days * 24 * 60)
+                
+                if total_planned_operating_time > 0 and total_unplanned_dt > 0:
+                    sim_avail = ((total_planned_operating_time - remaining_dt_min) / total_planned_operating_time) * 100.0
+                    sim_avail = min(sim_avail, 100.0)
+                else:
+                    sim_avail = curr_line_avail + (100.0 - curr_line_avail) * (downtime_reduction_pct / 100.0)
+
+                sim_oee = (sim_avail / 100.0) * (curr_line_perf / 100.0) * (curr_line_qual / 100.0) * 100.0
+                oee_gain = sim_oee - curr_line_oee
+
+            with sim_col_output:
+                st.markdown(f"**Proyeksi Perbaikan untuk Line: {target_sim_line}**")
+                
+                s_c1, s_c2, s_c3 = st.columns(3)
+                s_c1.metric("OEE Saat Ini", f"{curr_line_oee:.2f}%")
+                s_c2.metric("Proyeksi OEE Baru", f"{sim_oee:.2f}%", delta=f"+{oee_gain:.2f}%")
+                s_c3.metric("Target OEE Line", f"{target_line_oee:.2f}%")
+
+                dt_per_day_target = (remaining_dt_min / num_days) if num_days > 0 else 0
+                
+                if sim_oee >= target_line_oee:
+                    st.success(
+                        f"✅ **Target Tercapai!** Dengan menurunkan Downtime sebesar **{downtime_reduction_pct}%** "
+                        f"(menghemat **{int(dt_saved_min):,} menit**), OEE Line diproyeksikan naik menjadi **{sim_oee:.2f}%** "
+                        f"(Melampaui target **{target_line_oee:.2f}%**)."
+                    )
+                else:
+                    st.warning(
+                        f"⚠️ **Masih Perlu Perbaikan:** Penurunan Downtime **{downtime_reduction_pct}%** meningkatkan OEE ke **{sim_oee:.2f}%**, "
+                        f"namun masih kurang **{(target_line_oee - sim_oee):.2f}%** dari target. Kombinasikan dengan perbaikan *Speed Loss* / *Setup Time*."
+                    )
+
+                st.info(
+                    f"💡 **Target Mingguan/Harian Tim Production:** Batasi total Unplanned Downtime maksimal **{int(dt_per_day_target)} menit/hari** "
+                    f"(atau **{int(dt_per_day_target * 7)} menit/minggu**) untuk memastikan target OEE tercapai sebelum akhir bulan."
+                )
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
 
-        # -------------------------------------------------------------
-        # SEKSI G: PDCA ACTION PLAN TRACKER
-        # -------------------------------------------------------------
+        # DIAGNOSIS AI
         st.markdown(
-            '<div class="section-title">G. Rencana Aksi PDCA & Monitoring Improvement</div>',
+            '<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
             unsafe_allow_html=True,
         )
 
-        df_action = load_or_init_action_plan()
+        factor_details = {
+            "Availability": {
+                "defisit": active_std["avail"] - avg_avail,
+                "actual": avg_avail,
+                "target": active_std["avail"],
+                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
+            },
+            "Performance": {
+                "defisit": active_std["perf"] - avg_perf,
+                "actual": avg_perf,
+                "target": active_std["perf"],
+                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
+            },
+            "Quality": {
+                "defisit": active_std["qual"] - avg_qual,
+                "actual": avg_qual,
+                "target": active_std["qual"],
+                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
+            },
+        }
 
-        with st.expander("➕ Tambah Rencana Aksi PDCA Baru", expanded=False):
-            with st.form("add_action_form"):
-                f_date = st.date_input("Tanggal Inisiasi")
-                f_line = st.selectbox("Line Produksi", sorted_lines)
-                f_tema = st.text_input("Tema / Judul Improvement")
-                f_pic = st.text_input("PIC (Penanggung Jawab)")
-                f_target = st.date_input("Target Selesai")
-                f_status = st.selectbox("Status", ["Plan", "Do", "Check", "Action", "Closed"])
+        problem_factors = [
+            (name, data)
+            for name, data in factor_details.items()
+            if data["defisit"] > 0.001
+        ]
+        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-                submitted = st.form_submit_button("Simpan Action Plan")
-                if submitted:
-                    new_row = pd.DataFrame([{
-                        "Tanggal Inisiasi": f_date.strftime("%Y-%m-%d"),
-                        "Line Produksi": f_line,
-                        "Tema Improvement": f_tema,
-                        "PIC": f_pic,
-                        "Target Selesai": f_target.strftime("%Y-%m-%d"),
-                        "Status": f_status
-                    }])
-                    df_action = pd.concat([df_action, new_row], ignore_index=True)
-                    df_action.to_csv(ACTION_PLAN_FILE, index=False)
-                    st.success("Rencana aksi berhasil disimpan!")
-                    st.rerun()
+        if problem_factors:
+            p1_name, p1_val = problem_factors[0]
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
 
-        st.dataframe(df_action, use_container_width=True)
+            prioritas_text = ""
+            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
+        else:
+            header_status = (
+                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            )
+            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+
+        st.markdown(
+            f"""
+### Laporan Diagnosis AI: {selected_line}
+Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
+
+---
+
+#### Rekomendasi Utama: {header_status}
+{desc_status}
+
+#### Urutan Matriks Prioritas Perbaikan:
+{prioritas_text}
+"""
+        )
+        with st.expander("Lihat Data Excel Mentah Detail"):
+            st.dataframe(df_filtered, use_container_width=True)
+
+        # TABEL MONITORING ACTION PLAN PDCA
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
+            unsafe_allow_html=True,
+        )
+
+        df_action_plan = load_or_init_action_plan()
+
+        with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
+            with st.form("form_add_action_plan", clear_on_submit=True):
+                f_col1, f_col2, f_col3 = st.columns(3)
+                with f_col1:
+                    tgl_inisiasi = st.date_input("Tanggal Inisiasi")
+                    line_target = st.selectbox("Line Produksi", sorted_lines)
+                with f_col2:
+                    tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced CT pada extruder")
+                    pic_name = st.text_input("PIC", placeholder="Contoh: Ardha (Prod) / Anwar (Mtc)")
+                with f_col3:
+                    target_selesai = st.date_input("Target Selesai")
+                    status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
+
+                btn_submit = st.form_submit_button("Simpan Action Plan")
+
+                if btn_submit:
+                    if tema_imp.strip() == "" or pic_name.strip() == "":
+                        st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
+                    else:
+                        new_row = pd.DataFrame(
+                            [{
+                                "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
+                                "Line Produksi": line_target,
+                                "Tema Improvement": tema_imp.strip(),
+                                "PIC": pic_name.strip(),
+                                "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
+                                "Status": status_initial
+                            }]
+                        )
+                        df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
+                        df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
+                        st.success("Action plan berhasil ditambahkan!")
+                        st.rerun()
+
+        count_total = len(df_action_plan)
+        count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
+        count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
+        count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
+
+        st_c1, st_c2, st_c3, st_c4 = st.columns(4)
+        st_c1.metric("Total Action Plan", count_total)
+        st_c2.metric("Status: Done", count_done)
+        st_c3.metric("Status: On Progress", count_progress)
+        st_c4.metric("Status: Delay", count_delay)
+
+        if not df_action_plan.empty:
+            st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
+            
+            edited_df = st.data_editor(
+                df_action_plan,
+                column_config={
+                    "Status": st.column_config.SelectboxColumn(
+                        "Status",
+                        help="Status Pekerjaan PDCA",
+                        options=["On Progress", "Done", "Delay"],
+                        required=True,
+                    ),
+                    "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
+                    "Target Selesai": st.column_config.DateColumn("Target Selesai"),
+                },
+                num_rows="dynamic",
+                use_container_width=True,
+                key="action_plan_editor"
+            )
+
+            if st.button("Simpan Perubahan Tabel Action Plan"):
+                edited_df.to_csv(ACTION_PLAN_FILE, index=False)
+                st.success("Perubahan Action Plan PDCA berhasil disimpan!")
+                st.rerun()
+        else:
+            st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
 
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat memproses file: {e}")
+        st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")
 
 else:
-    st.info("💡 Silakan unggah berkas Excel data harian OEE melalui panel kontrol di sebelah kiri untuk memulai analisis.")
+    st.markdown(
+        '<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>',
+        unsafe_allow_html=True,
+    )
+    fig_trend_year = go.Figure()
 
-# FOOTER
-st.markdown(
-    '<div class="footer">PT. ARGAPURA — Operational Excellence & Executive Dashboard &copy; 2026</div>',
-    unsafe_allow_html=True,
-)
+    bar_colors = [
+        (
+            "#3B82F6"
+            if (v is not None and v >= 94.0)
+            else "#F87171"
+            if v is not None
+            else "#1F2937"
+        )
+        for v in df_summary["OEE_Aktual"]
+    ]
+
+    fig_trend_year.add_trace(
+        go.Bar(
+            x=df_summary["Bulan"],
+            y=df_summary["OEE_Aktual"],
+            text=[
+                f"{v:.1f}%" if pd.notnull(v) else ""
+                for v in df_summary["OEE_Aktual"]
+            ],
+            textposition="outside",
+            marker_color=bar_colors,
+        )
+    )
+    fig_trend_year.add_hline(
+        y=94.0,
+        line_color="#EF4444",
+        line_width=3,
+        annotation_text="Target: 94%",
+        annotation_position="top right",
+    )
+    fig_trend_year.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#9CA3AF"),
+        yaxis=dict(title="[%]", range=[70, 105]),
+        height=350,
+    )
+    st.plotly_chart(fig_trend_year, use_container_width=True)
+
+    st.info(
+        "Silakan unggah file Excel data OEE harian di sidebar untuk menganalisis per line dan memperbarui tren bulanan."
+    )
+
 st.markdown(
     '<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>',
     unsafe_allow_html=True,

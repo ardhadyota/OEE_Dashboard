@@ -120,7 +120,7 @@ def load_or_init_action_plan():
         return df_init
 
 
-# FUNGSI PENENTU STATUS KESEHATAN LINE
+# FUNGSI PENENTU STATUS PENCAPAIAN LINE
 def get_health_status(oee_actual, oee_target):
     if oee_actual < (oee_target - 5.0):
         return "🔴 Critical Alert", "critical"
@@ -376,14 +376,14 @@ if uploaded_file is not None:
         )
 
         # -------------------------------------------------------------
-        # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
+        # SEKSI A: EXECUTIVE SUMMARY & STATUS PENCAPAIAN LINE
         # -------------------------------------------------------------
         st.markdown(
             '<div class="section-title">A. Executive Summary — Status & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 
-        # REKAP STATUS KESEHATAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
+        # REKAP STATUS PENCAPAIAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
         filtered_df_time["Target_Line"] = filtered_df_time["LineID"].apply(
             lambda x: get_target_by_line(x)["oee"]
         )
@@ -494,19 +494,19 @@ if uploaded_file is not None:
 
         if status_type == "critical":
             st.error(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
                 f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
         elif status_type == "warning":
             st.warning(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
                 f"Mandat Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
             )
         else:
             st.success(
-                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
                 f"Mandat Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
@@ -589,7 +589,7 @@ if uploaded_file is not None:
 
         with col_right:
             st.markdown(
-                '<div class="section-title">Daftar Status Kesehatan Line Produksi</div>',
+                '<div class="section-title">Daftar Status Pencapaian Line Produksi</div>',
                 unsafe_allow_html=True,
             )
             if selected_line != "Semua Line":
@@ -614,7 +614,7 @@ if uploaded_file is not None:
                     .reset_index()
                 )
 
-                line_summary["Status Kesehatan"], _ = zip(
+                line_summary["Status Pencapaian"], _ = zip(
                     *line_summary.apply(
                         lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
                         axis=1,
@@ -625,7 +625,7 @@ if uploaded_file is not None:
                 line_summary = line_summary.sort_values(by="Gap", ascending=True)
 
                 display_tbl = line_summary[
-                    ["Status Kesehatan", "LineID", "Target_Line", "OEE_pct", "Gap"]
+                    ["Status Pencapaian", "LineID", "Target_Line", "OEE_pct", "Gap"]
                 ].copy()
                 display_tbl.columns = [
                     "Status",

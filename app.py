@@ -432,105 +432,6 @@ if uploaded_file is not None:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # =========================================================
-        # SEKSI BARU: KALKULATOR SIMULASI WHAT-IF (PROAKTIF TARGETING)
-        # =========================================================
-        st.markdown("---")
-        st.markdown(
-            '<div class="section-title">Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
-            unsafe_allow_html=True,
-        )
-
-        EXPLICIT_LOSS_COLS = [
-            "Unplanned Downtime",
-            "Setup & Adjustment",
-            "Idling & Minor Stops",
-            "Reduced Speed",
-            "Process Defects",
-            "Startup Losses",
-            "Planned Shutdown (Non-OEE)",
-        ]
-
-        available_loss_cols = [
-            col for col in EXPLICIT_LOSS_COLS if col in df.columns
-        ]
-        for col in available_loss_cols:
-            if df[col].dtype == "object":
-                df[col] = df[col].astype(str).str.replace(",", ".").str.strip()
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-
-        with st.container():
-            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
-            st.markdown("#### 🎯 Simulasi Dampak Pengurangan Downtime Terhadap OEE")
-            
-            sim_col_input, sim_col_output = st.columns([1, 1.2])
-
-            with sim_col_input:
-                target_sim_line = st.selectbox("Pilih Line untuk Simulasi:", sorted_lines, key="sim_line_select")
-                downtime_reduction_pct = st.slider(
-                    f"Target Pengurangan Unplanned Downtime (%):",
-                    min_value=0,
-                    max_value=100,
-                    value=20,
-                    step=5,
-                    help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
-                )
-
-                df_sim_line = df[df["LineID"] == target_sim_line]
-                num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
-                
-                curr_line_oee = df_sim_line["OEE_pct"].mean()
-                curr_line_avail = df_sim_line["Avail_pct"].mean()
-                curr_line_perf = df_sim_line["Perf_pct"].mean()
-                curr_line_qual = df_sim_line["Qual_pct"].mean()
-                target_line_oee = get_target_by_line(target_sim_line)["oee"]
-
-                total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0
-                dt_saved_min = total_unplanned_dt * (downtime_reduction_pct / 100.0)
-                remaining_dt_min = total_unplanned_dt - dt_saved_min
-
-                total_planned_operating_time = (num_days * 24 * 60)
-                
-                if total_planned_operating_time > 0 and total_unplanned_dt > 0:
-                    sim_avail = ((total_planned_operating_time - remaining_dt_min) / total_planned_operating_time) * 100.0
-                    sim_avail = min(sim_avail, 100.0)
-                else:
-                    sim_avail = curr_line_avail + (100.0 - curr_line_avail) * (downtime_reduction_pct / 100.0)
-
-                sim_oee = (sim_avail / 100.0) * (curr_line_perf / 100.0) * (curr_line_qual / 100.0) * 100.0
-                oee_gain = sim_oee - curr_line_oee
-
-            with sim_col_output:
-                st.markdown(f"**Proyeksi Perbaikan untuk Line: {target_sim_line}**")
-                
-                s_c1, s_c2, s_c3 = st.columns(3)
-                s_c1.metric("OEE Saat Ini", f"{curr_line_oee:.2f}%")
-                s_c2.metric("Proyeksi OEE Baru", f"{sim_oee:.2f}%", delta=f"+{oee_gain:.2f}%")
-                s_c3.metric("Target OEE Line", f"{target_line_oee:.2f}%")
-
-                dt_per_day_target = (remaining_dt_min / num_days) if num_days > 0 else 0
-                
-                if sim_oee >= target_line_oee:
-                    st.success(
-                        f"✅ **Target Tercapai!** Dengan menurunkan Downtime sebesar **{downtime_reduction_pct}%** "
-                        f"(menghemat **{int(dt_saved_min):,} menit**), OEE Line diproyeksikan naik menjadi **{sim_oee:.2f}%** "
-                        f"(Melampaui target **{target_line_oee:.2f}%**)."
-                    )
-                else:
-                    st.warning(
-                        f"⚠️ **Masih Perlu Perbaikan:** Penurunan Downtime **{downtime_reduction_pct}%** meningkatkan OEE ke **{sim_oee:.2f}%**, "
-                        f"namun masih kurang **{(target_line_oee - sim_oee):.2f}%** dari target. Kombinasikan dengan perbaikan *Speed Loss* / *Setup Time*."
-                    )
-
-                st.info(
-                    f"💡 **Target Mingguan/Harian Tim Production:** Batasi total Unplanned Downtime maksimal **{int(dt_per_day_target)} menit/hari** "
-                    f"(atau **{int(dt_per_day_target * 7)} menit/minggu**) untuk memastikan target OEE tercapai sebelum akhir bulan."
-                )
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown("---")
-
         col_left, col_right = st.columns([1, 1.2])
 
         with col_left:
@@ -641,6 +542,24 @@ if uploaded_file is not None:
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
+
+        EXPLICIT_LOSS_COLS = [
+            "Unplanned Downtime",
+            "Setup & Adjustment",
+            "Idling & Minor Stops",
+            "Reduced Speed",
+            "Process Defects",
+            "Startup Losses",
+            "Planned Shutdown (Non-OEE)",
+        ]
+
+        available_loss_cols = [
+            col for col in EXPLICIT_LOSS_COLS if col in df.columns
+        ]
+        for col in available_loss_cols:
+            if df[col].dtype == "object":
+                df[col] = df[col].astype(str).str.replace(",", ".").str.strip()
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
         df_filtered_loss = (
             df.copy()
@@ -996,6 +915,92 @@ if uploaded_file is not None:
             showlegend=False,
         )
         st.plotly_chart(fig_line, use_container_width=True)
+
+        # =========================================================
+        # SEKSI KALKULATOR SIMULASI WHAT-IF (DIPINDAHKAN KE SINI)
+        # =========================================================
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
+            unsafe_allow_html=True,
+        )
+
+        with st.container():
+            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
+            st.markdown("#### 🎯 Simulasi Dampak Pengurangan Downtime Terhadap OEE")
+            
+            sim_col_input, sim_col_output = st.columns([1, 1.2])
+
+            with sim_col_input:
+                target_sim_line = st.selectbox(
+                    "Pilih Line untuk Simulasi:", 
+                    sorted_lines, 
+                    index=sorted_lines.index(selected_line) if selected_line in sorted_lines else 0,
+                    key="sim_line_select"
+                )
+                downtime_reduction_pct = st.slider(
+                    f"Target Pengurangan Unplanned Downtime (%):",
+                    min_value=0,
+                    max_value=100,
+                    value=20,
+                    step=5,
+                    help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
+                )
+
+                df_sim_line = df[df["LineID"] == target_sim_line]
+                num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
+                
+                curr_line_oee = df_sim_line["OEE_pct"].mean()
+                curr_line_avail = df_sim_line["Avail_pct"].mean()
+                curr_line_perf = df_sim_line["Perf_pct"].mean()
+                curr_line_qual = df_sim_line["Qual_pct"].mean()
+                target_line_oee = get_target_by_line(target_sim_line)["oee"]
+
+                total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0
+                dt_saved_min = total_unplanned_dt * (downtime_reduction_pct / 100.0)
+                remaining_dt_min = total_unplanned_dt - dt_saved_min
+
+                total_planned_operating_time = (num_days * 24 * 60)
+                
+                if total_planned_operating_time > 0 and total_unplanned_dt > 0:
+                    sim_avail = ((total_planned_operating_time - remaining_dt_min) / total_planned_operating_time) * 100.0
+                    sim_avail = min(sim_avail, 100.0)
+                else:
+                    sim_avail = curr_line_avail + (100.0 - curr_line_avail) * (downtime_reduction_pct / 100.0)
+
+                sim_oee = (sim_avail / 100.0) * (curr_line_perf / 100.0) * (curr_line_qual / 100.0) * 100.0
+                oee_gain = sim_oee - curr_line_oee
+
+            with sim_col_output:
+                st.markdown(f"**Proyeksi Perbaikan untuk Line: {target_sim_line}**")
+                
+                s_c1, s_c2, s_c3 = st.columns(3)
+                s_c1.metric("OEE Saat Ini", f"{curr_line_oee:.2f}%")
+                s_c2.metric("Proyeksi OEE Baru", f"{sim_oee:.2f}%", delta=f"+{oee_gain:.2f}%")
+                s_c3.metric("Target OEE Line", f"{target_line_oee:.2f}%")
+
+                dt_per_day_target = (remaining_dt_min / num_days) if num_days > 0 else 0
+                
+                if sim_oee >= target_line_oee:
+                    st.success(
+                        f"✅ **Target Tercapai!** Dengan menurunkan Downtime sebesar **{downtime_reduction_pct}%** "
+                        f"(menghemat **{int(dt_saved_min):,} menit**), OEE Line diproyeksikan naik menjadi **{sim_oee:.2f}%** "
+                        f"(Melampaui target **{target_line_oee:.2f}%**)."
+                    )
+                else:
+                    st.warning(
+                        f"⚠️ **Masih Perlu Perbaikan:** Penurunan Downtime **{downtime_reduction_pct}%** meningkatkan OEE ke **{sim_oee:.2f}%**, "
+                        f"namun masih kurang **{(target_line_oee - sim_oee):.2f}%** dari target. Kombinasikan dengan perbaikan *Speed Loss* / *Setup Time*."
+                    )
+
+                st.info(
+                    f"💡 **Target Mingguan/Harian Tim Production:** Batasi total Unplanned Downtime maksimal **{int(dt_per_day_target)} menit/hari** "
+                    f"(atau **{int(dt_per_day_target * 7)} menit/minggu**) untuk memastikan target OEE tercapai sebelum akhir bulan."
+                )
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown("---")
 
         # DIAGNOSIS AI
         st.markdown(

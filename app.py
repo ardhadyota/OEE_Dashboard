@@ -240,26 +240,32 @@ if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_b64 = base64.b64encode(f.read()).decode()
     st.sidebar.markdown(
-        f"""
-        <div style="background-color:#FFF; padding:12px; border-radius:12px; text-align:center; width:150px; margin:0 auto 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-            <img src="data:image/png;base64,{img_b64}" style="width:100%; display:block; margin:0 auto;">
-            <div style="color: #1E293B; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; margin-top: 8px; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-                DEPARTEMENT PRODUKSI
-            </div>
-        </div>
-        """,
+        f'<div style="background-color:#FFF;padding:10px;border-radius:12px;text-align:center;width:140px;margin:0 auto 20px auto;"><img src="data:image/png;base64,{img_b64}" style="width:100%;"></div>',
         unsafe_allow_html=True,
     )
 else:
     st.sidebar.markdown(
-        """
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #38BDF8; margin: 0; font-weight: 700;">PT. ARGAPURA</h2>
-            <p style="color: #94A3B8; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; margin-top: 4px;">DEPARTEMENT PRODUKSI</p>
-        </div>
-        """,
+        "<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>",
         unsafe_allow_html=True,
     )
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "<h3 style='color: #818CF8;'>Control Panel</h3>", unsafe_allow_html=True
+)
+uploaded_file = st.sidebar.file_uploader(
+    "Unggah Data Excel OEE Bulanan", type=["xlsx", "xls"]
+)
+
+st.markdown(
+    """
+    <div class="dashboard-header">
+        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
+        <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
 
 df_summary = load_or_init_monthly_summary()
 

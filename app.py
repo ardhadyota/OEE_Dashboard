@@ -15,7 +15,10 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    .stApp { background-color: #0E1117; color: #E0E0E0; }
+    .stApp {
+        background-color: #0E1117;
+        color: #E0E0E0;
+    }
     .metric-card {
         background: linear-gradient(135deg, #1E2640 0%, #111827 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -23,11 +26,34 @@ st.markdown("""
         padding: 18px 22px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    .metric-title { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px; }
-    .metric-value { font-size: 2rem; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; }
-    .metric-badge { display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
-    .badge-success { background-color: rgba(16, 185, 129, 0.15); color: #10B981; }
-    .badge-danger { background-color: rgba(239, 68, 68, 0.15); color: #EF4444; }
+    .metric-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #9CA3AF;
+        margin-bottom: 6px;
+    }
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin-bottom: 4px;
+    }
+    .metric-badge {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+    .badge-success {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #10B981;
+    }
+    .badge-danger {
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #EF4444;
+    }
     .dashboard-header {
         background: linear-gradient(90deg, #1E1B4B 0%, #0F172A 100%);
         padding: 24px 28px;
@@ -38,21 +64,20 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
     }
-    .section-title { font-size: 1.2rem; font-weight: 600; color: #F3F4F6; margin: 15px 0; }
-    .footer { text-align: center; font-size: 0.8rem; color: #6B7280; padding: 20px 0; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 40px; }
-    
-    /* STYLE UNTUK BADGE ALERT HEALTH STATUS (POIN 4) */
-    .status-alert-box {
-        padding: 15px 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #F3F4F6;
+        margin: 15px 0;
     }
-    .alert-critical { background-color: rgba(239, 68, 68, 0.15); border: 1px solid #EF4444; color: #FCA5A5; }
-    .alert-warning { background-color: rgba(245, 158, 11, 0.15); border: 1px solid #F59E0B; color: #FCD34D; }
-    .alert-ok { background-color: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; color: #6EE7B7; }
+    .footer {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #6B7280;
+        padding: 20px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 40px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -64,7 +89,10 @@ def load_or_init_monthly_summary():
     if os.path.exists(SUMMARY_FILE):
         return pd.read_csv(SUMMARY_FILE)
     else:
-        df_init = pd.DataFrame({"Bulan": months, "OEE_Aktual": [None]*12})
+        df_init = pd.DataFrame({
+            "Bulan": months,
+            "OEE_Aktual": [None] * 12
+        })
         df_init.to_csv(SUMMARY_FILE, index=False)
         return df_init
 
@@ -90,7 +118,6 @@ LINE_STANDARDS = {
 
 DEFAULT_OVERALL_STD = {"avail": 90.0, "perf": 95.0, "qual": 99.0, "oee": 94.00}
 
-# FUNGSI PENCOCOKAN NAMA LINE CERDAS
 def get_target_by_line(line_name):
     if not isinstance(line_name, str):
         return DEFAULT_OVERALL_STD
@@ -119,11 +146,16 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("<h3 style='color: #818CF8;'>Control Panel</h3>", unsafe_allow_html=True)
 uploaded_file = st.sidebar.file_uploader("Unggah Data Excel OEE Bulanan", type=["xlsx", "xls"])
 
-# Header Dashboard Utama
 st.markdown("""
     <div class="dashboard-header">
-        <div><h1>OEE Executive Analytics & Control</h1><p>System Control & Improvement Execution Platform</p></div>
-        <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
+        <div>
+            <h1 style="margin:0; font-size: 1.8rem; color: #FFFFFF;">OEE Executive Analytics & Control</h1>
+            <p style="margin: 4px 0 0 0; color: #818CF8; font-weight: 500;">System Control & Improvement Execution Platform</p>
+        </div>
+        <div style="text-align: right;">
+            <h3 style="margin: 0; color: #38BDF8; font-size: 1.2rem;">PT. ARGAPURA</h3>
+            <p style="margin: 2px 0 0 0; color: #94A3B8; font-size: 0.8rem; letter-spacing: 1px;">ESTABLISHED 1954</p>
+        </div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -146,49 +178,25 @@ if uploaded_file is not None:
         df['Perf_pct'] = df['% Performance'].apply(lambda x: x * 100 if x <= 1.0 else x)
         df['Qual_pct'] = df['Quality'].apply(lambda x: x * 100 if x <= 1.0 else x)
 
-        # Hitung Minggu ke-N untuk Time Filter
-        df['Minggu'] = "Minggu " + df['Tgl'].dt.isocalendar().week.astype(str)
-
         current_month_name = df['Tgl'].dt.strftime('%b').iloc[0]
         avg_monthly_all_lines = df['OEE_pct'].mean()
         
         df_summary.loc[df_summary['Bulan'] == current_month_name, 'OEE_Aktual'] = avg_monthly_all_lines
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
-        # ---------------------------------------------------------------------
-        # POIN 5: DYNAMIC TIME FILTER & LINE FILTER IN SIDEBAR
-        # ---------------------------------------------------------------------
         st.sidebar.markdown("---")
         st.sidebar.markdown("<h4 style='color: #E2E8F0;'>Filter Control</h4>", unsafe_allow_html=True)
-        
         sorted_lines = sorted(list(df["LineID"].dropna().unique()))
         lines = ["Semua Line"] + sorted_lines
         selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
 
-        # Filter Periode Waktu Dinamis
-        time_mode = st.sidebar.radio("Rentang Waktu:", ["Satu Bulan Full", "Filter Mingguan", "Custom Date Range"])
-        
         df_filtered = df.copy()
         if selected_line != "Semua Line":
             df_filtered = df_filtered[df_filtered["LineID"] == selected_line]
 
-        if time_mode == "Filter Mingguan":
-            available_weeks = sorted(list(df['Minggu'].unique()))
-            selected_week = st.sidebar.selectbox("Pilih Minggu:", available_weeks)
-            df_filtered = df_filtered[df_filtered['Minggu'] == selected_week]
-        elif time_mode == "Custom Date Range":
-            min_date = df['Tgl'].min().date()
-            max_date = df['Tgl'].max().date()
-            date_range = st.sidebar.date_input("Pilih Rentang Tanggal:", [min_date, max_date], min_value=min_date, max_value=max_date)
-            if len(date_range) == 2:
-                df_filtered = df_filtered[(df_filtered['Tgl'].dt.date >= date_range[0]) & (df_filtered['Tgl'].dt.date <= date_range[1])]
-
-        # Target Active Standard
         active_std = DEFAULT_OVERALL_STD if selected_line == "Semua Line" else get_target_by_line(selected_line)
 
-        # ---------------------------------------------------------------------
         # BOARD TOP: EXECUTIVE SUMMARY TAHUNAN
-        # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>', unsafe_allow_html=True)
         
         fig_trend_year = go.Figure()
@@ -200,9 +208,12 @@ if uploaded_file is not None:
                 bar_colors.append('#1F2937')
 
         fig_trend_year.add_trace(go.Bar(
-            x=df_summary['Bulan'], y=df_summary['OEE_Aktual'],
+            x=df_summary['Bulan'],
+            y=df_summary['OEE_Aktual'],
             text=[f"{v:.1f}%" if pd.notnull(v) else "" for v in df_summary['OEE_Aktual']],
-            textposition='outside', marker_color=bar_colors, name="Aktual OEE"
+            textposition='outside',
+            marker_color=bar_colors,
+            name="Aktual OEE"
         ))
 
         fig_trend_year.add_hline(
@@ -212,53 +223,23 @@ if uploaded_file is not None:
         )
 
         fig_trend_year.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#9CA3AF'), yaxis=dict(title="[%]", range=[70, 105]),
-            xaxis=dict(title="Bulan Produksi"), height=320, showlegend=False
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#9CA3AF'),
+            yaxis=dict(title="[%]", range=[70, 105]),
+            xaxis=dict(title="Bulan Produksi"),
+            height=320,
+            showlegend=False
         )
         st.plotly_chart(fig_trend_year, use_container_width=True)
 
         st.markdown("---")
 
-        # ---------------------------------------------------------------------
-        # POIN 4: MANAGEMENT ALERT & HEALTH STATUS BADGE
-        # ---------------------------------------------------------------------
         avg_oee = df_filtered['OEE_pct'].mean()
         avg_avail = df_filtered['Avail_pct'].mean()
         avg_perf = df_filtered['Perf_pct'].mean()
         avg_qual = df_filtered['Qual_pct'].mean()
 
-        gap_oee = avg_oee - active_std['oee']
-
-        # Kategori Status Kesehatan
-        if gap_oee < -3.0:
-            status_class = "alert-critical"
-            status_label = "🔴 CRITICAL ALERT: OEE Sangat Di Bawah Target!"
-            action_req = "Eskalasi Segera ke Manajer Produksi & Engineering untuk Intervensi Darurat."
-        elif gap_oee < 0:
-            status_class = "alert-warning"
-            status_label = "🟡 WARNING: OEE Belum Mencapai Target Spesifik"
-            action_req = "Dibutuhkan Perhatian Supervisor & Review Action Plan Harian."
-        else:
-            status_class = "alert-ok"
-            status_label = "🟢 ON TRACK: Performa Line Memenuhi Target"
-            action_req = "Pertahankan Ritme Operasional & Jalankan Preventive Maintenance Standar."
-
-        st.markdown(f"""
-        <div class="status-alert-box {status_class}">
-            <div>
-                <h4 style="margin:0; font-size: 1.1rem;">{status_label}</h4>
-                <p style="margin: 4px 0 0 0; font-size: 0.9rem;"><strong>Mandat Manajemen:</strong> {action_req}</p>
-            </div>
-            <div style="text-align: right;">
-                <span style="font-size: 1.4rem; font-weight: bold;">{avg_oee:.2f}%</span> / Target: {active_std['oee']:.2f}%
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ---------------------------------------------------------------------
-        # METRIK TAMPILAN KPI
-        # ---------------------------------------------------------------------
         diff_oee = avg_oee - active_std['oee']
         diff_avail = avg_avail - active_std['avail']
         diff_perf = avg_perf - active_std['perf']
@@ -283,9 +264,10 @@ if uploaded_file is not None:
         st.markdown("<br>", unsafe_allow_html=True)
 
         # ---------------------------------------------------------------------
-        # STRATEGI MANAJEMEN & PARETO PROBLEM
+        # STRATEGI MANAJEMEN (MAIN KPI -> SUB KPI -> PROSES KPI)
         # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">Peta Strategi Manajemen (KPI Alignment)</div>', unsafe_allow_html=True)
+
         st.markdown(f"""
         <div style="background-color: #1E2640; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
             <h4 style="color: #60A5FA; margin-top: 0;">🎯 Alignment Strategi Pencapaian Target OEE</h4>
@@ -295,12 +277,18 @@ if uploaded_file is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        # AI PARETO & SPESIFIK TEMA IMPROVEMENT
+        # ---------------------------------------------------------------------
+        # AI PARETO ANALYSIS & SPESIFIK TEMA IMPROVEMENT
+        # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">AI Pareto Recommendation & Specific Improvement Theme</div>', unsafe_allow_html=True)
         
+        def_avail = active_std['avail'] - avg_avail
+        def_perf = active_std['perf'] - avg_perf
+        def_qual = active_std['qual'] - avg_qual
+
         factor_details = {
             "Availability": {
-                "defisit": active_std['avail'] - avg_avail, 
+                "defisit": def_avail, 
                 "actual": avg_avail, 
                 "target": active_std['avail'], 
                 "loss_category": "Breakdown & Setup Losses (Downtime)",
@@ -312,7 +300,7 @@ if uploaded_file is not None:
                 ]
             },
             "Performance": {
-                "defisit": active_std['perf'] - avg_perf, 
+                "defisit": def_perf, 
                 "actual": avg_perf, 
                 "target": active_std['perf'], 
                 "loss_category": "Speed Loss & Micro Stoppages (Minor Stops)",
@@ -324,7 +312,7 @@ if uploaded_file is not None:
                 ]
             },
             "Quality": {
-                "defisit": active_std['qual'] - avg_qual, 
+                "defisit": def_qual, 
                 "actual": avg_qual, 
                 "target": active_std['qual'], 
                 "loss_category": "Defect & Scrap Losses (Reject Rate)",
@@ -337,16 +325,19 @@ if uploaded_file is not None:
             }
         }
 
-        problem_factors = [(name, data) for name, data in factor_details.items() if data["defisit"] > 0.001]
+        problem_factors = [
+            (name, data) for name, data in factor_details.items() if data["defisit"] > 0.001
+        ]
         problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
         if problem_factors:
             top_problem_name, top_problem_data = problem_factors[0]
+            
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #2D1522 0%, #111827 100%); border: 1px solid #EF4444; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
                 <h3 style="color: #F87171; margin-top:0;">🔥 PARETO PROBLEM UTAMA: {top_problem_name.upper()}</h3>
                 <p style="font-size: 1.05rem; color: #F3F4F6;">
-                    Faktor <strong>{top_problem_name}</strong> memberikan dampak penurunan OEE terbesar pada <strong>{selected_line}</strong> dengan defisit sebesar <strong style="color:#F87171;">-{top_problem_data['defisit']:.2f}%</strong> (Aktual: {top_problem_data['actual']:.2f}% vs Target: {top_problem_data['target']:.2f}%).
+                    Berdasarkan analisis Pareto, faktor <strong>{top_problem_name}</strong> memberikan dampak penurunan OEE terbesar pada <strong>{selected_line}</strong> dengan defisit sebesar <strong style="color:#F87171;">-{top_problem_data['defisit']:.2f}%</strong> (Aktual: {top_problem_data['actual']:.2f}% vs Target: {top_problem_data['target']:.2f}%).
                 </p>
                 <hr style="border-color: rgba(255,255,255,0.1);">
                 <h4 style="color: #38BDF8; margin-bottom: 8px;">💡 REKOMENDASI TEMA IMPROVEMENT SPESIFIK (QCC / KAIZEN):</h4>
@@ -359,8 +350,13 @@ if uploaded_file is not None:
             st.markdown("#### 📌 Langkah-Langkah Eksekusi Improvement (Action Plan):")
             for i, step in enumerate(top_problem_data['action_steps'], start=1):
                 st.markdown(f"**{i}.** {step}")
+
+            if len(problem_factors) > 1:
+                st.markdown("<br><b>Urutan Sekunder Pareto Problem Lainnya:</b>", unsafe_allow_html=True)
+                for idx, (fname, fdata) in enumerate(problem_factors[1:], start=2):
+                    st.markdown(f"* **Prioritas {idx} ({fname}):** Defisit -{fdata['defisit']:.2f}% — *Kategori: {fdata['loss_category']}*")
         else:
-            st.success(f"🎉 **Tidak Ada Pareto Problem!** Seluruh faktor OEE pada **{selected_line}** sudah memenuhi atau melebihi target spesifik.")
+            st.success(f"🎉 **Tidak Ada Pareto Problem!** Seluruh faktor OEE pada **{selected_line}** sudah memenuhi atau melebihi target spesifik. Fokus kegiatan saat ini adalah **Standardization & Preventive Maintenance**.")
 
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)

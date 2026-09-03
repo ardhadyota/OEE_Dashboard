@@ -347,7 +347,7 @@ if uploaded_file is not None:
 
         gap_oee = avg_oee - active_std["oee"]
 
-       # === KODE BARU (Tempel di sini) ===
+        # 1. Tampilkan Status Alert
         if gap_oee < -3.0:
             st.error(
                 f"**SYSTEM STATUS: CRITICAL ALERT — Line: {selected_line}**\n\n"
@@ -367,6 +367,7 @@ if uploaded_file is not None:
                 f"Mandat Operasional: Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar."
             )
 
+        # 2. Tampilkan Ringkasan Metrik
         col_m1, col_m2 = st.columns(2)
         col_m1.metric(
             label="OEE AKTUAL",
@@ -376,96 +377,6 @@ if uploaded_file is not None:
         col_m2.metric(label="TARGET LINE", value=f"{active_std['oee']:.2f}%")
 
         st.markdown("---")
-
-        <style>
-            @keyframes pulse-glow {{
-                0% {{ box-shadow: 0 0 0 0 {status_theme['glow']}; }}
-                70% {{ box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }}
-                100% {{ box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }}
-            }}
-            .pulse-dot {{
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                background-color: {status_theme['badge_bg']};
-                margin-right: 8px;
-                animation: pulse-glow 2s infinite;
-            }}
-        </style>
-
-        <div style="
-            background: {status_theme['bg']};
-            border: 1px solid {status_theme['border']};
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;">
-            
-            <div style="flex: 1 1 500px;">
-                <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                    <span class="pulse-dot"></span>
-                    <span style="
-                        background-color: {status_theme['badge_bg']};
-                        color: {status_theme['badge_text']};
-                        font-size: 0.75rem;
-                        font-weight: 800;
-                        padding: 3px 10px;
-                        border-radius: 6px;
-                        letter-spacing: 1px;
-                        text-transform: uppercase;">
-                        SYSTEM STATUS: {status_theme['label']}
-                    </span>
-                    <span style="color: #9CA3AF; font-size: 0.85rem; margin-left: 12px;">
-                        Line: <strong style="color: #F3F4F6;">{selected_line}</strong>
-                    </span>
-                </div>
-                
-                <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 700; color: {status_theme['title_color']};">
-                    {status_theme['desc']}
-                </h3>
-                
-                <p style="margin: 0; font-size: 0.88rem; color: #CBD5E1; line-height: 1.4;">
-                    <strong style="color: #94A3B8; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Mandat Operasional:</strong> 
-                    {status_theme['mandate']}
-                </p>
-            </div>
-
-            <div style="
-                display: flex;
-                align-items: center;
-                gap: 24px;
-                background: rgba(15, 23, 42, 0.6);
-                padding: 12px 20px;
-                border-radius: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.05);">
-                
-                <div style="text-align: right;">
-                    <div style="font-size: 0.72rem; color: #9CA3AF; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">OEE Aktual</div>
-                    <div style="font-size: 1.75rem; font-weight: 800; color: #FFFFFF; line-height: 1.1;">{avg_oee:.2f}<span style="font-size: 1rem; color: #9CA3AF;">%</span></div>
-                </div>
-
-                <div style="height: 32px; width: 1px; background-color: rgba(255, 255, 255, 0.1);"></div>
-
-                <div style="text-align: left;">
-                    <div style="font-size: 0.72rem; color: #9CA3AF; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Target Line</div>
-                    <div style="font-size: 1.25rem; font-weight: 700; color: #38BDF8; line-height: 1.1;">{active_std['oee']:.2f}<span style="font-size: 0.85rem; color: #9CA3AF;">%</span></div>
-                    <div style="font-size: 0.75rem; font-weight: 600; color: {'#EF4444' if gap_oee < 0 else '#10B981'};">
-                        {gap_oee:+.2f}% Gap
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
 
         def get_badge_html(diff, target_text):
             if diff >= 0:

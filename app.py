@@ -236,6 +236,7 @@ def get_target_by_line(line_name):
 
 
 # ==========================================
+# ==========================================
 # SIDEBAR LOGO & CONTROLS (GANTI BAGIAN INI)
 # ==========================================
 if os.path.exists("logo.png"):
@@ -291,6 +292,7 @@ st.markdown(
 )
 
 df_summary = load_or_init_monthly_summary()
+
 if uploaded_file is not None:
     try:
         df = pd.read_excel(uploaded_file, sheet_name="Data Daily")

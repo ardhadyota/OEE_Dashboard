@@ -347,7 +347,7 @@ if uploaded_file is not None:
 
         gap_oee = avg_oee - active_std["oee"]
 
-        # 1. Tampilkan Status Alert
+        # Tampilkan Status Alert
         if gap_oee < -3.0:
             st.error(
                 f"**SYSTEM STATUS: CRITICAL ALERT — Line: {selected_line}**\n\n"
@@ -366,15 +366,6 @@ if uploaded_file is not None:
                 f"**Performa Operasional Memenuhi / Melebihi Target Standard**\n\n"
                 f"Mandat Operasional: Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar."
             )
-
-        # 2. Tampilkan Ringkasan Metrik
-        col_m1, col_m2 = st.columns(2)
-        col_m1.metric(
-            label="OEE AKTUAL",
-            value=f"{avg_oee:.2f}%",
-            delta=f"{gap_oee:+.2f}% Gap",
-        )
-        col_m2.metric(label="TARGET LINE", value=f"{active_std['oee']:.2f}%")
 
         st.markdown("---")
 

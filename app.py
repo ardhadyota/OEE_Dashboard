@@ -329,25 +329,50 @@ if uploaded_file is not None:
         fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(title="OEE (%)"), xaxis=dict(title="Tanggal Produksi", type='category', tickangle=-45), height=420, showlegend=False)
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # AI DIAGNOSIS ENGINE
+        # AI DIAGNOSIS ENGINE (REVISED LOGIC)
         st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>', unsafe_allow_html=True)
+        
+        # Hitung defisit (Target - Aktual). Nilai positif artinya bermasalah (di bawah target).
         factor_details = {
-            "Availability": {"gap": active_std['avail'] - avg_avail, "actual": avg_avail, "target": active_std['avail'], "loss_type": "Downtime Losses Breakdown dan Waktu Setup", "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED)."},
-            "Performance": {"gap": active_std['perf'] - avg_perf, "actual": avg_perf, "target": active_std['perf'], "loss_type": "Speed Losses dan Micro Stoppages", "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops)."},
-            "Quality": {"gap": active_std['qual'] - avg_qual, "actual": avg_qual, "target": active_std['qual'], "loss_type": "Defect Losses Reject dan Rework", "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses."}
+            "Availability": {
+                "defisit": active_std['avail'] - avg_avail, 
+                "actual": avg_avail, 
+                "target": active_std['avail'], 
+                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED)."
+            },
+            "Performance": {
+                "defisit": active_std['perf'] - avg_perf, 
+                "actual": avg_perf, 
+                "target": active_std['perf'], 
+                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops)."
+            },
+            "Quality": {
+                "defisit": active_std['qual'] - avg_qual, 
+                "actual": avg_qual, 
+                "target": active_std['qual'], 
+                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses."
+            }
         }
 
-        sorted_factors = sorted(factor_details.items(), key=lambda item: item[1]["gap"], reverse=True)
-        p1_name, p1_val = sorted_factors[0]
-        p2_name, p2_val = sorted_factors[1]
-        p3_name, p3_val = sorted_factors[2]
+        # Filter hanya faktor yang punya defisit > 0 (di bawah target) dan urutkan dari defisit terbesar
+        problem_factors = [
+            (name, data) for name, data in factor_details.items() if data["defisit"] > 0.001
+        ]
+        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-        if p1_val['gap'] > 0:
+        if problem_factors:
+            p1_name, p1_val = problem_factors[0]
             header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['gap']:.2f}%** di bawah target spesifiknya (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+            
+            prioritas_text = ""
+            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
         else:
             header_status = "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-            desc_status = f"Luar biasa! Semua 3 faktor utama (Availability, Performance, Quality) pada **{selected_line}** berada di atas target spesifik masing-masing."
+            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
 
         st.markdown(f"""
 ### Laporan Diagnosis AI: {selected_line}
@@ -359,14 +384,8 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
 {desc_status}
 
 #### Urutan Matriks Prioritas Perbaikan:
-1. **Prioritas 1 — {p1_name}** (Gap: {p1_val['gap']:+.2f}% | Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)  
-   *Tindakan:* {p1_val['action']}
-2. **Prioritas 2 — {p2_name}** (Gap: {p2_val['gap']:+.2f}% | Aktual: {p2_val['actual']:.2f}% vs Target Line: {p2_val['target']:.2f}%)  
-   *Tindakan:* {p2_val['action']}
-3. **Prioritas 3 — {p3_name}** (Gap: {p3_val['gap']:+.2f}% | Aktual: {p3_val['actual']:.2f}% vs Target Line: {p3_val['target']:.2f}%)  
-   *Tindakan:* {p3_val['action']}
+{prioritas_text}
 """)
-
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 

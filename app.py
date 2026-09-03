@@ -25,6 +25,27 @@ st.markdown(
         padding: 18px 22px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
+    .status-card-critical {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #EF4444;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+    .status-card-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid #F59E0B;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+    .status-card-ontrack {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid #10B981;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
     .sim-card {
         background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -97,6 +118,16 @@ def load_or_init_action_plan():
         df_init = pd.DataFrame(columns=cols)
         df_init.to_csv(ACTION_PLAN_FILE, index=False)
         return df_init
+
+
+# FUNGSI PENENTU STATUS KESEHATAN LINE
+def get_health_status(oee_actual, oee_target):
+    if oee_actual < (oee_target - 5.0):
+        return "🔴 Critical Alert", "critical"
+    elif oee_actual < oee_target:
+        return "🟡 Warning", "warning"
+    else:
+        return "🟢 On Track", "ontrack"
 
 
 # 3. KAMUS TARGET SPESIFIK LINE
@@ -229,7 +260,7 @@ uploaded_file = st.sidebar.file_uploader(
 st.markdown(
     """
     <div class="dashboard-header">
-        <div><h1>OEE Executive Analytics</h1><p>Monitoring Pencapaian Tren OEE Tahunan dan Performa Line Produksi</p></div>
+        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
         <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
     </div>
 """,
@@ -241,7 +272,6 @@ df_summary = load_or_init_monthly_summary()
 if uploaded_file is not None:
     try:
         df = pd.read_excel(uploaded_file, sheet_name="Data Daily")
-
         df.columns = [str(c).strip() for c in df.columns]
 
         required_cols = [
@@ -284,11 +314,51 @@ if uploaded_file is not None:
         ] = avg_monthly_all_lines
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
-        # SEKSI A: EXECUTIVE SUMMARY
+        # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
         st.markdown(
-            '<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>',
+            '<div class="section-title">A. Executive Summary — Status Kesehatan Line & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
+
+        # REKAP STATUS KESEHATAN SELURUH LINE (MANAGEMENT BY EXCEPTION)
+        df["Target_Line"] = df["LineID"].apply(
+            lambda x: get_target_by_line(x)["oee"]
+        )
+
+        all_line_summary = (
+            df.groupby("LineID")
+            .agg({"OEE_pct": "mean", "Target_Line": "first"})
+            .reset_index()
+        )
+
+        all_line_summary["Status_Label"], all_line_summary["Status_Type"] = (
+            zip(
+                *all_line_summary.apply(
+                    lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
+                    axis=1,
+                )
+            )
+        )
+
+        count_critical = (all_line_summary["Status_Type"] == "critical").sum()
+        count_warning = (all_line_summary["Status_Type"] == "warning").sum()
+        count_ontrack = (all_line_summary["Status_Type"] == "ontrack").sum()
+
+        m1, m2, m3 = st.columns(3)
+        m1.markdown(
+            f'<div class="status-card-critical"><h4 style="color:#EF4444;margin:0;">🔴 Critical Alert</h4><h2 style="color:#FFF;margin:5px 0;">{count_critical} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &lt; Target - 5% (Intervensi Manajer/Direksi)</p></div>',
+            unsafe_allow_html=True,
+        )
+        m2.markdown(
+            f'<div class="status-card-warning"><h4 style="color:#F59E0B;margin:0;">🟡 Warning Zone</h4><h2 style="color:#FFF;margin:5px 0;">{count_warning} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &lt; Target (Perhatian Supervisor)</p></div>',
+            unsafe_allow_html=True,
+        )
+        m3.markdown(
+            f'<div class="status-card-ontrack"><h4 style="color:#10B981;margin:0;">🟢 On Track</h4><h2 style="color:#FFF;margin:5px 0;">{count_ontrack} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &ge; Target (Sesuai Standar Operasional)</p></div>',
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
         fig_trend_year = go.Figure()
         bar_colors = []
@@ -329,16 +399,13 @@ if uploaded_file is not None:
             font=dict(color="#9CA3AF"),
             yaxis=dict(title="[%]", range=[70, 105]),
             xaxis=dict(title="Bulan Produksi"),
-            height=350,
+            height=320,
             showlegend=False,
         )
         st.plotly_chart(fig_trend_year, use_container_width=True)
 
         st.markdown("---")
 
-        df["Target_Line"] = df["LineID"].apply(
-            lambda x: get_target_by_line(x)["oee"]
-        )
         df["Target_Avail"] = df["LineID"].apply(
             lambda x: get_target_by_line(x)["avail"]
         )
@@ -374,30 +441,25 @@ if uploaded_file is not None:
         avg_perf = df_filtered["Perf_pct"].mean()
         avg_qual = df_filtered["Qual_pct"].mean()
 
-        diff_oee = avg_oee - active_std["oee"]
-        diff_avail = avg_avail - active_std["avail"]
-        diff_perf = avg_perf - active_std["perf"]
-        diff_qual = avg_qual - active_std["qual"]
+        status_text, status_type = get_health_status(avg_oee, active_std["oee"])
 
-        gap_oee = avg_oee - active_std["oee"]
-
-        if gap_oee < -3.0:
+        if status_type == "critical":
             st.error(
-                f"**SYSTEM STATUS: CRITICAL ALERT — Line: {selected_line}**\n\n"
-                f"**OEE Mengalami Defisit Signifikan Dari Target Line**\n\n"
-                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi operasional darurat."
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
+                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
-        elif gap_oee < 0:
+        elif status_type == "warning":
             st.warning(
-                f"**SYSTEM STATUS: WARNING — Line: {selected_line}**\n\n"
-                f"**OEE Belum Mencapai Target Spesifik Lini**\n\n"
-                f"Mandat Operasional: Dibutuhkan perhatian ekstra dari Supervisor & evaluasi harian pada akar masalah utama."
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
+                f"Mandat Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
             )
         else:
             st.success(
-                f"**SYSTEM STATUS: ON TRACK — Line: {selected_line}**\n\n"
-                f"**Performa Operasional Memenuhi / Melebihi Target Standard**\n\n"
-                f"Mandat Operasional: Pertahankan ritme operasional & pastikan kepatuhan Preventive Maintenance standar."
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
+                f"Mandat Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
 
         st.markdown("---")
@@ -406,6 +468,11 @@ if uploaded_file is not None:
             if diff >= 0:
                 return f'<span class="metric-badge badge-success">+{diff:.2f}% vs {target_text}</span>'
             return f'<span class="metric-badge badge-danger">{diff:.2f}% vs {target_text}</span>'
+
+        diff_oee = avg_oee - active_std["oee"]
+        diff_avail = avg_avail - active_std["avail"]
+        diff_perf = avg_perf - active_std["perf"]
+        diff_qual = avg_qual - active_std["qual"]
 
         std_oee_txt = f"Target {active_std['oee']:.2f}%"
         std_avail_txt = f"Target {active_std['avail']:.1f}%"
@@ -473,18 +540,16 @@ if uploaded_file is not None:
 
         with col_right:
             st.markdown(
-                '<div class="section-title">Daftar Line di Bawah Target Urut Gap</div>',
+                '<div class="section-title">Daftar Status Kesehatan Line Produksi</div>',
                 unsafe_allow_html=True,
             )
             if selected_line != "Semua Line":
-                if avg_oee < active_std["oee"]:
-                    st.error(
-                        f"Line {selected_line} tidak mencapai target. Defisit OEE: {(active_std['oee'] - avg_oee):.2f}%."
-                    )
-                else:
-                    st.success(
-                        f"Line {selected_line} berhasil memenuhi/melampaui target yang ditentukan ({active_std['oee']:.2f}%)."
-                    )
+                status_lbl, _ = get_health_status(avg_oee, active_std["oee"])
+                st.info(
+                    f"**Line:** {selected_line}\n\n"
+                    f"**Status:** {status_lbl}\n\n"
+                    f"**OEE:** {avg_oee:.2f}% | **Target:** {active_std['oee']:.2f}% | **Gap:** {(avg_oee - active_std['oee']):+.2f}%"
+                )
             else:
                 line_summary = (
                     df.groupby("LineID")
@@ -493,47 +558,45 @@ if uploaded_file is not None:
                             "OEE_pct": "mean",
                             "Target_Line": "first",
                             "Avail_pct": "mean",
-                            "Target_Avail": "first",
                             "Perf_pct": "mean",
-                            "Target_Perf": "first",
                             "Qual_pct": "mean",
-                            "Target_Qual": "first",
                         }
                     )
                     .reset_index()
                 )
 
-                problem_list = []
-                for idx, row in line_summary.iterrows():
-                    gap_oee_val = row["Target_Line"] - row["OEE_pct"]
-                    if gap_oee_val > 0:
-                        problem_list.append(
-                            {
-                                "Nama Line": row["LineID"],
-                                "Target OEE": f"{row['Target_Line']:.2f}%",
-                                "Aktual OEE": f"{row['OEE_pct']:.2f}%",
-                                "Gap": gap_oee_val,
-                                "Kekurangan": f"-{gap_oee_val:.2f}%",
-                                "Availability": f"{row['Avail_pct']:.1f}% / {row['Target_Avail']:.0f}%",
-                                "Performance": f"{row['Perf_pct']:.1f}% / {row['Target_Perf']:.0f}%",
-                                "Quality": f"{row['Qual_pct']:.1f}% / {row['Target_Qual']:.2f}%",
-                            }
-                        )
+                line_summary["Status Kesehatan"], _ = zip(
+                    *line_summary.apply(
+                        lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
+                        axis=1,
+                    )
+                )
 
-                if problem_list:
-                    df_problems = (
-                        pd.DataFrame(problem_list)
-                        .sort_values(by="Gap", ascending=False)
-                        .drop(columns=["Gap"])
-                    )
-                    df_problems.index = range(1, len(df_problems) + 1)
-                    st.dataframe(
-                        df_problems, height=270, use_container_width=True
-                    )
-                else:
-                    st.success(
-                        "Luar biasa! Seluruh Line produksi berhasil mencapai target OEE spesifik masing-masing."
-                    )
+                line_summary["Gap"] = line_summary["OEE_pct"] - line_summary["Target_Line"]
+                line_summary = line_summary.sort_values(by="Gap", ascending=True)
+
+                display_tbl = line_summary[
+                    ["Status Kesehatan", "LineID", "Target_Line", "OEE_pct", "Gap"]
+                ].copy()
+                display_tbl.columns = [
+                    "Status",
+                    "Nama Line",
+                    "Target OEE",
+                    "Aktual OEE",
+                    "Deviasi Gap",
+                ]
+                display_tbl["Target OEE"] = display_tbl["Target OEE"].apply(
+                    lambda x: f"{x:.2f}%"
+                )
+                display_tbl["Aktual OEE"] = display_tbl["Aktual OEE"].apply(
+                    lambda x: f"{x:.2f}%"
+                )
+                display_tbl["Deviasi Gap"] = display_tbl["Deviasi Gap"].apply(
+                    lambda x: f"{x:+.2f}%"
+                )
+
+                display_tbl.index = range(1, len(display_tbl) + 1)
+                st.dataframe(display_tbl, height=270, use_container_width=True)
 
         st.markdown("---")
 
@@ -761,46 +824,6 @@ if uploaded_file is not None:
 
             st.markdown(priority_html, unsafe_allow_html=True)
 
-        st.markdown(
-            "<h4 style='color: #F3F4F6;'>Visualisasi Komposisi Kerugian per Line Produksi</h4>",
-            unsafe_allow_html=True,
-        )
-
-        fig_stacked_loss = go.Figure()
-        colors_palette = [
-            "#EF4444",
-            "#F59E0B",
-            "#3B82F6",
-            "#10B981",
-            "#8B5CF6",
-            "#EC4899",
-            "#64748B",
-        ]
-
-        for idx_c, l_col in enumerate(available_loss_cols):
-            fig_stacked_loss.add_trace(
-                go.Bar(
-                    name=l_col,
-                    x=df_line_losses.index,
-                    y=df_line_losses[l_col],
-                    marker_color=colors_palette[idx_c % len(colors_palette)],
-                )
-            )
-
-        fig_stacked_loss.update_layout(
-            barmode="stack",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#9CA3AF"),
-            xaxis=dict(tickangle=-35),
-            yaxis=dict(title="Durasi Kerugian (Menit)"),
-            height=380,
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-            ),
-        )
-        st.plotly_chart(fig_stacked_loss, use_container_width=True)
-
         st.markdown("---")
 
         # RATIO PENCAPAIAN
@@ -916,9 +939,7 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # =========================================================
-        # SEKSI KALKULATOR SIMULASI WHAT-IF (DIPINDAHKAN KE SINI)
-        # =========================================================
+        # SEKSI KALKULATOR SIMULASI WHAT-IF
         st.markdown("---")
         st.markdown(
             '<div class="section-title">Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
@@ -1069,9 +1090,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
-        # =========================================================
         # TABEL MONITORING ACTION PLAN PDCA
-        # =========================================================
         st.markdown("---")
         st.markdown(
             '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',

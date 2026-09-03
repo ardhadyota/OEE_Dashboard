@@ -120,7 +120,7 @@ def load_or_init_action_plan():
         return df_init
 
 
-# FUNGSI PENENTU STATUS PENCAPAIAN LINE
+# FUNGSI PENENTU STATUS KESEHATAN LINE
 def get_health_status(oee_actual, oee_target):
     if oee_actual < (oee_target - 5.0):
         return "🔴 Critical Alert", "critical"
@@ -235,32 +235,17 @@ def get_target_by_line(line_name):
     return DEFAULT_OVERALL_STD
 
 
-# ==========================================
-# ==========================================
-# SIDEBAR LOGO & CONTROLS (GANTI BAGIAN INI)
-# ==========================================
+# SIDEBAR LOGO & CONTROLS
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_b64 = base64.b64encode(f.read()).decode()
     st.sidebar.markdown(
-        f"""
-        <div style="background-color:#FFF; padding:12px; border-radius:12px; text-align:center; width:150px; margin:0 auto 20px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-            <img src="data:image/png;base64,{img_b64}" style="width:100%; display:block; margin:0 auto;">
-            <div style="color: #1E293B; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; margin-top: 8px; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-                DEPARTEMENT PRODUKSI
-            </div>
-        </div>
-        """,
+        f'<div style="background-color:#FFF;padding:10px;border-radius:12px;text-align:center;width:140px;margin:0 auto 20px auto;"><img src="data:image/png;base64,{img_b64}" style="width:100%;"></div>',
         unsafe_allow_html=True,
     )
 else:
     st.sidebar.markdown(
-        """
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #38BDF8; margin: 0; font-weight: 700;">PT. ARGAPURA</h2>
-            <p style="color: #94A3B8; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; margin-top: 4px;">DEPARTEMENT PRODUKSI</p>
-        </div>
-        """,
+        "<h2 style='text-align: center; color: #38BDF8;'>PT. ARGAPURA</h2>",
         unsafe_allow_html=True,
     )
 
@@ -268,24 +253,15 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(
     "<h3 style='color: #818CF8;'>Control Panel</h3>", unsafe_allow_html=True
 )
-
-# PENTING: Variabel file uploader
 uploaded_file = st.sidebar.file_uploader(
     "Unggah Data Excel OEE Bulanan", type=["xlsx", "xls"]
 )
 
-# HEADER UTAMA DASHBOARD
 st.markdown(
     """
     <div class="dashboard-header">
-        <div>
-            <h1>OEE Executive Analytics</h1>
-            <p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-            <h3 style="color:#38BDF8 !important; margin:0 !important; font-weight: 700;">PT. ARGAPURA</h3>
-            <p style="color:#94A3B8 !important; margin:0 !important; font-size: 0.85rem; letter-spacing: 1px;">ESTABLISHED 1954</p>
-        </div>
+        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
+        <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
     </div>
 """,
     unsafe_allow_html=True,
@@ -400,14 +376,14 @@ if uploaded_file is not None:
         )
 
         # -------------------------------------------------------------
-        # SEKSI A: EXECUTIVE SUMMARY & STATUS PENCAPAIAN LINE
+        # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
         # -------------------------------------------------------------
         st.markdown(
-            '<div class="section-title">A. Executive Summary — Status & Pencapaian Tahunan</div>',
+            '<div class="section-title">A. Executive Summary — Status Kesehatan Line & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 
-        # REKAP STATUS PENCAPAIAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
+        # REKAP STATUS KESEHATAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
         filtered_df_time["Target_Line"] = filtered_df_time["LineID"].apply(
             lambda x: get_target_by_line(x)["oee"]
         )
@@ -518,21 +494,21 @@ if uploaded_file is not None:
 
         if status_type == "critical":
             st.error(
-                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Remark: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
+                f"Mandat Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
         elif status_type == "warning":
             st.warning(
-                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Catatan Operasional: Perhatian & evaluasi harian pada akar masalah utama."
+                f"Mandat Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
             )
         else:
             st.success(
-                f"**STATUS PENCAPAIAN: {status_text} — Line: {selected_line}**\n\n"
+                f"**STATUS KESEHATAN: {status_text} — Line: {selected_line}**\n\n"
                 f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Catatan Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
+                f"Mandat Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
 
         st.markdown("---")
@@ -613,7 +589,7 @@ if uploaded_file is not None:
 
         with col_right:
             st.markdown(
-                '<div class="section-title">Daftar Status Pencapaian Line Produksi</div>',
+                '<div class="section-title">Daftar Status Kesehatan Line Produksi</div>',
                 unsafe_allow_html=True,
             )
             if selected_line != "Semua Line":
@@ -638,7 +614,7 @@ if uploaded_file is not None:
                     .reset_index()
                 )
 
-                line_summary["Status Pencapaian"], _ = zip(
+                line_summary["Status Kesehatan"], _ = zip(
                     *line_summary.apply(
                         lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
                         axis=1,
@@ -649,7 +625,7 @@ if uploaded_file is not None:
                 line_summary = line_summary.sort_values(by="Gap", ascending=True)
 
                 display_tbl = line_summary[
-                    ["Status Pencapaian", "LineID", "Target_Line", "OEE_pct", "Gap"]
+                    ["Status Kesehatan", "LineID", "Target_Line", "OEE_pct", "Gap"]
                 ].copy()
                 display_tbl.columns = [
                     "Status",
@@ -1160,93 +1136,138 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             st.dataframe(df_filtered, use_container_width=True)
 
         # TABEL MONITORING ACTION PLAN PDCA
-st.markdown("---")
-st.markdown(
-    '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
-    unsafe_allow_html=True,
-)
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
+            unsafe_allow_html=True,
+        )
 
-df_action_plan = load_or_init_action_plan()
+        df_action_plan = load_or_init_action_plan()
 
-with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
-    with st.form("form_add_action_plan", clear_on_submit=True):
-        f_col1, f_col2, f_col3 = st.columns(3)
-        with f_col1:
-            tgl_inisiasi = st.date_input("Tanggal Inisiasi")
-            line_target = st.selectbox("Line Produksi", sorted_lines)
-        with f_col2:
-            tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
-            pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
-        with f_col3:
-            target_selesai = st.date_input("Target Selesai")
-            status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
+        with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
+            with st.form("form_add_action_plan", clear_on_submit=True):
+                f_col1, f_col2, f_col3 = st.columns(3)
+                with f_col1:
+                    tgl_inisiasi = st.date_input("Tanggal Inisiasi")
+                    line_target = st.selectbox("Line Produksi", sorted_lines)
+                with f_col2:
+                    tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
+                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
+                with f_col3:
+                    target_selesai = st.date_input("Target Selesai")
+                    status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
 
-        btn_submit = st.form_submit_button("Simpan Action Plan")
+                btn_submit = st.form_submit_button("Simpan Action Plan")
 
-        if btn_submit:
-            if tema_imp.strip() == "" or pic_name.strip() == "":
-                st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
-            else:
-                new_row = pd.DataFrame(
-                    [{
-                        "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
-                        "Line Produksi": line_target,
-                        "Tema Improvement": tema_imp.strip(),
-                        "PIC": pic_name.strip(),
-                        "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
-                        "Status": status_initial
-                    }]
-                )
-                df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
-                df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
-                st.success("Action plan berhasil ditambahkan!")
+                if btn_submit:
+                    if tema_imp.strip() == "" or pic_name.strip() == "":
+                        st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
+                    else:
+                        new_row = pd.DataFrame(
+                            [{
+                                "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
+                                "Line Produksi": line_target,
+                                "Tema Improvement": tema_imp.strip(),
+                                "PIC": pic_name.strip(),
+                                "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
+                                "Status": status_initial
+                            }]
+                        )
+                        df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
+                        df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
+                        st.success("Action plan berhasil ditambahkan!")
+                        st.rerun()
+
+        count_total = len(df_action_plan)
+        count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
+        count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
+        count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
+
+        st_c1, st_c2, st_c3, st_c4 = st.columns(4)
+        st_c1.metric("Total Action Plan", count_total)
+        st_c2.metric("Status: Done", count_done)
+        st_c3.metric("Status: On Progress", count_progress)
+        st_c4.metric("Status: Delay", count_delay)
+
+        if not df_action_plan.empty:
+            st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
+            
+            edited_df = st.data_editor(
+                df_action_plan,
+                column_config={
+                    "Status": st.column_config.SelectboxColumn(
+                        "Status",
+                        help="Status Pekerjaan PDCA",
+                        options=["On Progress", "Done", "Delay"],
+                        required=True,
+                    ),
+                    "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
+                    "Target Selesai": st.column_config.DateColumn("Target Selesai"),
+                },
+                num_rows="dynamic",
+                use_container_width=True,
+                key="action_plan_editor"
+            )
+
+            if st.button("Simpan Perubahan Tabel Action Plan"):
+                edited_df.to_csv(ACTION_PLAN_FILE, index=False)
+                st.success("Perubahan Action Plan PDCA berhasil disimpan!")
                 st.rerun()
+        else:
+            st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
 
-count_total = len(df_action_plan)
-count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
-count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
-count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")
 
-st_c1, st_c2, st_c3, st_c4 = st.columns(4)
-st_c1.metric("Total Action Plan", count_total)
-st_c2.metric("Status: Done", count_done)
-st_c3.metric("Status: On Progress", count_progress)
-st_c4.metric("Status: Delay", count_delay)
-
-if not df_action_plan.empty:
-    st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
-    
-    # PERBAIKAN DI SINI: Convert kolom tanggal ke datetime agar cocok dengan DateColumn Streamlit
-    df_action_plan["Tanggal Inisiasi"] = pd.to_datetime(df_action_plan["Tanggal Inisiasi"], errors="coerce")
-    df_action_plan["Target Selesai"] = pd.to_datetime(df_action_plan["Target Selesai"], errors="coerce")
-
-    edited_df = st.data_editor(
-        df_action_plan,
-        column_config={
-            "Status": st.column_config.SelectboxColumn(
-                "Status",
-                help="Status Pekerjaan PDCA",
-                options=["On Progress", "Done", "Delay"],
-                required=True,
-            ),
-            "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
-            "Target Selesai": st.column_config.DateColumn("Target Selesai"),
-        },
-        num_rows="dynamic",
-        use_container_width=True,
-        key="action_plan_editor"
-    )
-
-    if st.button("Simpan Perubahan Tabel Action Plan"):
-        # Format kembali ke teks string YYYY-MM-DD saat disimpan ke CSV
-        edited_df_save = edited_df.copy()
-        edited_df_save["Tanggal Inisiasi"] = edited_df_save["Tanggal Inisiasi"].dt.strftime("%Y-%m-%d")
-        edited_df_save["Target Selesai"] = edited_df_save["Target Selesai"].dt.strftime("%Y-%m-%d")
-        edited_df_save.to_csv(ACTION_PLAN_FILE, index=False)
-        st.success("Perubahan Action Plan PDCA berhasil disimpan!")
-        st.rerun()
 else:
-    st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
+    st.markdown(
+        '<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>',
+        unsafe_allow_html=True,
+    )
+    fig_trend_year = go.Figure()
+
+    bar_colors = [
+        (
+            "#3B82F6"
+            if (v is not None and v >= 94.0)
+            else "#F87171"
+            if v is not None
+            else "#1F2937"
+        )
+        for v in df_summary["OEE_Aktual"]
+    ]
+
+    fig_trend_year.add_trace(
+        go.Bar(
+            x=df_summary["Bulan"],
+            y=df_summary["OEE_Aktual"],
+            text=[
+                f"{v:.1f}%" if pd.notnull(v) else ""
+                for v in df_summary["OEE_Aktual"]
+            ],
+            textposition="outside",
+            marker_color=bar_colors,
+        )
+    )
+    fig_trend_year.add_hline(
+        y=94.0,
+        line_color="#EF4444",
+        line_width=3,
+        annotation_text="Target: 94%",
+        annotation_position="top right",
+    )
+    fig_trend_year.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#9CA3AF"),
+        yaxis=dict(title="[%]", range=[70, 105]),
+        height=350,
+    )
+    st.plotly_chart(fig_trend_year, use_container_width=True)
+
+    st.info(
+        "Silakan unggah file Excel data OEE harian di sidebar untuk menganalisis per line dan memperbarui tren bulanan."
+    )
 
 st.markdown(
     '<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>',

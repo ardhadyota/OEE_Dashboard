@@ -514,7 +514,7 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES (SUM BARIS PRESISI)
+        # SEKSI PARETO ANALYSIS (HASIL PENJUMLAHAN DIBULATKAN TANPA KOMA)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
@@ -531,14 +531,12 @@ if uploaded_file is not None:
             "Planned Shutdown (Non-OEE)",
         ]
 
-        # Ambil kolom yang benar-benar ada di data
         available_loss_cols = [
             col for col in EXPLICIT_LOSS_COLS if col in df_filtered.columns
         ]
 
         loss_data = {}
         for col in available_loss_cols:
-            # Konversi string desimal berkoma jika ada (misal: "12,02" -> 12.02)
             series_clean = df_filtered[col]
             if series_clean.dtype == "object":
                 series_clean = (
@@ -547,31 +545,28 @@ if uploaded_file is not None:
                     .str.strip()
                 )
 
-            # Penjumlahan presisi seluruh nilai di baris bawah tiap kolom
+            # Penjumlahan total baris lalu dibulat (round)
             total_val = pd.to_numeric(
                 series_clean, errors="coerce"
             ).fillna(0).sum()
-            loss_data[col] = float(total_val)
+            loss_data[col] = round(total_val)
 
-        # Buat dataframe hasil penjumlahan baris
         loss_sums = pd.DataFrame(
             list(loss_data.items()), columns=["Penyebab_Losses", "Menit"]
         )
 
-        # Jika ada kolom dari standar 7 yang tidak ada di Excel, isi dengan 0
         missing_explicit = [
             c for c in EXPLICIT_LOSS_COLS if c not in loss_sums["Penyebab_Losses"].values
         ]
         if missing_explicit:
             df_missing = pd.DataFrame(
-                {"Penyebab_Losses": missing_explicit, "Menit": [0.0] * len(missing_explicit)}
+                {"Penyebab_Losses": missing_explicit, "Menit": [0] * len(missing_explicit)}
             )
             loss_sums = pd.concat([loss_sums, df_missing], ignore_index=True)
 
-        # Urutkan dari durasi menit tertinggi ke terkecil
+        # Urutkan dari durasi menit terbesar
         loss_sums = loss_sums.sort_values(by="Menit", ascending=False).reset_index(drop=True)
 
-        # Hitung akumulasi persen Pareto
         loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
         total_loss_min = loss_sums["Menit"].sum()
 
@@ -595,10 +590,8 @@ if uploaded_file is not None:
                     y=loss_sums["Menit"],
                     name="Durasi (Menit)",
                     marker_color="#EF4444",
-                    text=[
-                        f"{m:,.2f}m" if m % 1 != 0 else f"{m:,.0f}m"
-                        for m in loss_sums["Menit"]
-                    ],
+                    # Format teks pada grafik dibulatkan tanpa koma (misal: 2,765m)
+                    text=[f"{int(m):,}m" for m in loss_sums["Menit"]],
                     textposition="outside",
                 ),
                 secondary_y=False,
@@ -656,9 +649,10 @@ if uploaded_file is not None:
                 "Durasi (Menit)",
                 "Kumulatif (%)",
             ]
+            # Format tampilan durasi bulat penuh (tanpa desimal)
             top_5_display["Durasi (Menit)"] = top_5_display[
                 "Durasi (Menit)"
-            ].apply(lambda x: f"{x:,.2f} menit" if x % 1 != 0 else f"{x:,.0f} menit")
+            ].apply(lambda x: f"{int(x):,} menit")
             top_5_display["Kumulatif (%)"] = top_5_display[
                 "Kumulatif (%)"
             ].apply(lambda x: f"{x:.1f}%")
@@ -671,7 +665,7 @@ if uploaded_file is not None:
                     min(2, len(top_5_losses) - 1)
                 ]
                 st.caption(
-                    f"**Total Kerugian Operasional:** {total_loss_min:,.2f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
+                    f"**Total Kerugian Operasional:** {int(total_loss_min):,} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
                 )
 
         st.markdown("---")

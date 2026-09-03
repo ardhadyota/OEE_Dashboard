@@ -233,6 +233,11 @@ if uploaded_file is not None:
 
         df["Tgl"] = pd.to_datetime(df["Tgl"], errors="coerce")
         df = df.dropna(subset=["Tgl"]).sort_values(by="Tgl")
+
+        # Konversi kolom utama OEE ke numerik
+        for col in ["OEE", "Avail", "% Performance", "Quality"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+
         df["OEE_pct"] = df["OEE"].apply(lambda x: x * 100 if x <= 1.0 else x)
         df["Avail_pct"] = df["Avail"].apply(
             lambda x: x * 100 if x <= 1.0 else x
@@ -348,7 +353,6 @@ if uploaded_file is not None:
 
         gap_oee = avg_oee - active_std["oee"]
 
-        # Tampilkan Status Alert
         if gap_oee < -3.0:
             st.error(
                 f"**SYSTEM STATUS: CRITICAL ALERT — Line: {selected_line}**\n\n"
@@ -506,14 +510,13 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI BARU: PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN
+        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (PERBAIKAN)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
 
-        # 1. Deteksi Kolom Losses Spesifik dari Excel
         possible_loss_cols = [
             col
             for col in df_filtered.columns
@@ -533,16 +536,26 @@ if uploaded_file is not None:
             )
         ]
 
+        loss_sums = pd.DataFrame()
+
         if possible_loss_cols:
-            loss_sums = (
-                df_filtered[possible_loss_cols].sum().reset_index()
-            )
-            loss_sums.columns = ["Penyebab_Losses", "Menit"]
-            loss_sums = loss_sums[loss_sums["Menit"] > 0].sort_values(
-                by="Menit", ascending=False
-            )
-        else:
-            # Data fallback simulasi Six Big Losses apabila di file Excel belum ada detail breakdown
+            # Konversi semua kolom kandidat ke tipe data numerik
+            df_losses_numeric = df_filtered[possible_loss_cols].apply(
+                lambda c: pd.to_numeric(c, errors="coerce")
+            ).fillna(0)
+
+            # Filter hanya kolom yang angka dan total menitnya > 0 (mengabaikan kolom deskripsi teks)
+            valid_cols = [col for col in possible_loss_cols if df_losses_numeric[col].sum() > 0]
+
+            if valid_cols:
+                loss_sums = (
+                    df_losses_numeric[valid_cols].sum().reset_index()
+                )
+                loss_sums.columns = ["Penyebab_Losses", "Menit"]
+                loss_sums = loss_sums.sort_values(by="Menit", ascending=False)
+
+        # Gunakan fallback jika tidak ada kolom losses berformat angka di Excel
+        if loss_sums.empty:
             loss_sums = pd.DataFrame(
                 {
                     "Penyebab_Losses": [
@@ -557,100 +570,97 @@ if uploaded_file is not None:
                 }
             ).sort_values(by="Menit", ascending=False)
 
-        if not loss_sums.empty:
-            # Hitung Pareto kumulatif %
-            loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
-            total_loss_min = loss_sums["Menit"].sum()
-            loss_sums["Kumulatif_Pct"] = (
-                loss_sums["Kumulatif_Menit"] / total_loss_min
-            ) * 100
+        # Hitung Pareto kumulatif %
+        loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
+        total_loss_min = loss_sums["Menit"].sum()
+        loss_sums["Kumulatif_Pct"] = (
+            loss_sums["Kumulatif_Menit"] / total_loss_min
+        ) * 100
 
-            top_5_losses = loss_sums.head(5)
+        top_5_losses = loss_sums.head(5)
 
-            col_pareto_chart, col_pareto_table = st.columns([1.5, 1])
+        col_pareto_chart, col_pareto_table = st.columns([1.5, 1])
 
-            with col_pareto_chart:
-                # Membuat Grafik Pareto Komposisi Dual-Axis
-                fig_pareto = make_subplots(specs=[[{"secondary_y": True}]])
+        with col_pareto_chart:
+            fig_pareto = make_subplots(specs=[[{"secondary_y": True}]])
 
-                fig_pareto.add_trace(
-                    go.Bar(
-                        x=loss_sums["Penyebab_Losses"],
-                        y=loss_sums["Menit"],
-                        name="Durasi (Menit)",
-                        marker_color="#EF4444",
-                        text=[f"{m:.0f}m" for m in loss_sums["Menit"]],
-                        textposition="outside",
-                    ),
-                    secondary_y=False,
-                )
+            fig_pareto.add_trace(
+                go.Bar(
+                    x=loss_sums["Penyebab_Losses"],
+                    y=loss_sums["Menit"],
+                    name="Durasi (Menit)",
+                    marker_color="#EF4444",
+                    text=[f"{m:.0f}m" for m in loss_sums["Menit"]],
+                    textposition="outside",
+                ),
+                secondary_y=False,
+            )
 
-                fig_pareto.add_trace(
-                    go.Scatter(
-                        x=loss_sums["Penyebab_Losses"],
-                        y=loss_sums["Kumulatif_Pct"],
-                        name="Kumulatif (%)",
-                        mode="lines+markers",
-                        line=dict(color="#F59E0B", width=3),
-                        marker=dict(size=7),
-                    ),
-                    secondary_y=True,
-                )
+            fig_pareto.add_trace(
+                go.Scatter(
+                    x=loss_sums["Penyebab_Losses"],
+                    y=loss_sums["Kumulatif_Pct"],
+                    name="Kumulatif (%)",
+                    mode="lines+markers",
+                    line=dict(color="#F59E0B", width=3),
+                    marker=dict(size=7),
+                ),
+                secondary_y=True,
+            )
 
-                # Batas Ambro threshold Pareto (80%)
-                fig_pareto.add_hline(
-                    y=80,
-                    line_dash="dash",
-                    line_color="#10B981",
-                    annotation_text="Batas Pareto 80%",
-                    secondary_y=True,
-                )
+            fig_pareto.add_hline(
+                y=80,
+                line_dash="dash",
+                line_color="#10B981",
+                annotation_text="Batas Pareto 80%",
+                secondary_y=True,
+            )
 
-                fig_pareto.update_layout(
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#9CA3AF"),
-                    height=380,
-                    showlegend=False,
-                    xaxis=dict(tickangle=-30),
-                )
-                fig_pareto.update_yaxes(
-                    title_text="Durasi Kerugian (Menit)", secondary_y=False
-                )
-                fig_pareto.update_yaxes(
-                    title_text="Kumulatif (%)",
-                    range=[0, 110],
-                    secondary_y=True,
-                )
+            fig_pareto.update_layout(
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#9CA3AF"),
+                height=380,
+                showlegend=False,
+                xaxis=dict(tickangle=-30),
+            )
+            fig_pareto.update_yaxes(
+                title_text="Durasi Kerugian (Menit)", secondary_y=False
+            )
+            fig_pareto.update_yaxes(
+                title_text="Kumulatif (%)",
+                range=[0, 110],
+                secondary_y=True,
+            )
 
-                st.plotly_chart(fig_pareto, use_container_width=True)
+            st.plotly_chart(fig_pareto, use_container_width=True)
 
-            with col_pareto_table:
-                st.markdown(
-                    "<h4 style='color: #F3F4F6;'>Top 5 Akar Masalah Utama</h4>",
-                    unsafe_allow_html=True,
-                )
-                top_5_display = top_5_losses[
-                    ["Penyebab_Losses", "Menit", "Kumulatif_Pct"]
-                ].copy()
-                top_5_display.columns = [
-                    "Kategori Losses",
-                    "Durasi (Menit)",
-                    "Kumulatif (%)",
-                ]
-                top_5_display["Durasi (Menit)"] = top_5_display[
-                    "Durasi (Menit)"
-                ].apply(lambda x: f"{x:,.0f} menit")
-                top_5_display["Kumulatif (%)"] = top_5_display[
-                    "Kumulatif (%)"
-                ].apply(lambda x: f"{x:.1f}%")
-                top_5_display.index = range(1, len(top_5_display) + 1)
+        with col_pareto_table:
+            st.markdown(
+                "<h4 style='color: #F3F4F6;'>Top 5 Akar Masalah Utama</h4>",
+                unsafe_allow_html=True,
+            )
+            top_5_display = top_5_losses[
+                ["Penyebab_Losses", "Menit", "Kumulatif_Pct"]
+            ].copy()
+            top_5_display.columns = [
+                "Kategori Losses",
+                "Durasi (Menit)",
+                "Kumulatif (%)",
+            ]
+            top_5_display["Durasi (Menit)"] = top_5_display[
+                "Durasi (Menit)"
+            ].apply(lambda x: f"{x:,.0f} menit")
+            top_5_display["Kumulatif (%)"] = top_5_display[
+                "Kumulatif (%)"
+            ].apply(lambda x: f"{x:.1f}%")
+            top_5_display.index = range(1, len(top_5_display) + 1)
 
-                st.dataframe(top_5_display, use_container_width=True)
+            st.dataframe(top_5_display, use_container_width=True)
 
-                st.caption(
-                    f"**Total Kerugian Operasional:** {total_loss_min:,.0f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top_5_losses['Kumulatif_Pct'].iloc[min(2, len(top_5_losses)-1)]:.1f}%** dari total seluruh kendala lini produksi."
-                )
+            st.caption(
+                f"**Total Kerugian Operasional:** {total_loss_min:,.0f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top_5_losses['Kumulatif_Pct'].iloc[min(2, len(top_5_losses)-1)]:.1f}%** dari total seluruh kendala lini produksi."
+            )
 
         st.markdown("---")
 

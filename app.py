@@ -1070,7 +1070,7 @@ if uploaded_file is not None:
 
         # DIAGNOSIS AI
         st.markdown(
-            '<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
+            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
             unsafe_allow_html=True,
         )
 
@@ -1136,10 +1136,10 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             st.dataframe(df_filtered, use_container_width=True)
 
         # -------------------------------------------------------------
-        # SEKSI G: PDCA ACTION PLAN TRACKER
+        # SEKSI I: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------
         st.markdown(
-            '<div class="section-title">G. Rencana Aksi PDCA & Monitoring Improvement</div>',
+            '<div class="section-title">G. Rencana PDCA & Monitoring Improvement</div>',
             unsafe_allow_html=True,
         )
 

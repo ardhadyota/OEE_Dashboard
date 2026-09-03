@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 import base64
-import re
 
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(
@@ -55,7 +54,7 @@ def load_or_init_monthly_summary():
         df_init.to_csv(SUMMARY_FILE, index=False)
         return df_init
 
-# 3. KAMUS TARGET SPESIFIK
+# 3. KAMUS TARGET SPESIFIK PRESISI (SESUAI FOTO LAMPIRAN)
 LINE_STANDARDS = {
     "BTP":        {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
     "BTP MIX":    {"avail": 98.0, "perf": 99.0, "qual": 100.00, "oee": 96.74},
@@ -76,32 +75,6 @@ LINE_STANDARDS = {
 }
 
 DEFAULT_OVERALL_STD = {"avail": 90.0, "perf": 95.0, "qual": 99.0, "oee": 94.00}
-
-# FUNGSI PENCOCOKAN NAMA LINE CERDAS (FLEXIBLE MATCHING)
-def get_target_by_line(line_name):
-    if not isinstance(line_name, str):
-        return DEFAULT_OVERALL_STD
-    
-    clean_name = line_name.upper().strip()
-    
-    # 1. Coba pencocokan langsung
-    if clean_name in LINE_STANDARDS:
-        return LINE_STANDARDS[clean_name]
-    
-    # 2. Bersihkan kata SHIFT, EXTRUDING, dll.
-    cleaned = re.sub(r'\bSHIFT\s*\d+\b', '', clean_name)
-    cleaned = cleaned.replace("EXTRUDING", "EXT").strip()
-    cleaned = re.sub(r'\s+', ' ', cleaned)
-    
-    if cleaned in LINE_STANDARDS:
-        return LINE_STANDARDS[cleaned]
-
-    # 3. Fitur Fallback berbasis substring
-    for key in LINE_STANDARDS:
-        if key in clean_name or clean_name in key:
-            return LINE_STANDARDS[key]
-            
-    return DEFAULT_OVERALL_STD
 
 # Header & Sidebar Logo
 if os.path.exists("logo.png"):
@@ -142,6 +115,7 @@ if uploaded_file is not None:
         df['Perf_pct'] = df['% Performance'].apply(lambda x: x * 100 if x <= 1.0 else x)
         df['Qual_pct'] = df['Quality'].apply(lambda x: x * 100 if x <= 1.0 else x)
 
+        # Simpan Rata-rata OEE Semua Line ke Rekap Tahunan secara Otomatis
         current_month_name = df['Tgl'].dt.strftime('%b').iloc[0]
         avg_monthly_all_lines = df['OEE_pct'].mean()
         
@@ -149,7 +123,7 @@ if uploaded_file is not None:
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
         # ---------------------------------------------------------------------
-        # BOARD TOP: EXECUTIVE SUMMARY TAHUNAN
+        # BOARD TOP: TREN 1 TAHUN (JAN - DES) TARGET 94%
         # ---------------------------------------------------------------------
         st.markdown('<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>', unsafe_allow_html=True)
         
@@ -189,12 +163,12 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # ---------------------------------------------------------------------
-        # METRIK & TARGET LINE (MENGGUNAKAN MATCHING CERDAS)
+        # DETAIL BREAKDOWN BULAN AKTIF PER LINE
         # ---------------------------------------------------------------------
-        df['Target_Line'] = df['LineID'].apply(lambda x: get_target_by_line(x)['oee'])
-        df['Target_Avail'] = df['LineID'].apply(lambda x: get_target_by_line(x)['avail'])
-        df['Target_Perf'] = df['LineID'].apply(lambda x: get_target_by_line(x)['perf'])
-        df['Target_Qual'] = df['LineID'].apply(lambda x: get_target_by_line(x)['qual'])
+        df['Target_Line'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['oee'])
+        df['Target_Avail'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['avail'])
+        df['Target_Perf'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['perf'])
+        df['Target_Qual'] = df['LineID'].apply(lambda x: LINE_STANDARDS.get(x, DEFAULT_OVERALL_STD)['qual'])
         
         st.sidebar.markdown("---")
         st.sidebar.markdown("<h4 style='color: #E2E8F0;'>Filter Data</h4>", unsafe_allow_html=True)
@@ -203,7 +177,7 @@ if uploaded_file is not None:
         selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
         
         df_filtered = df.copy() if selected_line == "Semua Line" else df[df["LineID"] == selected_line]
-        active_std = DEFAULT_OVERALL_STD if selected_line == "Semua Line" else get_target_by_line(selected_line)
+        active_std = DEFAULT_OVERALL_STD if selected_line == "Semua Line" else LINE_STANDARDS.get(selected_line, DEFAULT_OVERALL_STD)
 
         avg_oee = df_filtered['OEE_pct'].mean()
         avg_avail = df_filtered['Avail_pct'].mean()
@@ -233,7 +207,7 @@ if uploaded_file is not None:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # CHART BENCHMARK & DAFTAR UNPRACTICAL LINE
+        # CHART BENCHMARK & LINE PROBLEM LIST
         col_left, col_right = st.columns([1, 1.2])
 
         with col_left:
@@ -374,6 +348,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")
 
 else:
+    # Standby View jika Belum Upload File Bulanan
     st.markdown('<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>', unsafe_allow_html=True)
     fig_trend_year = go.Figure()
     

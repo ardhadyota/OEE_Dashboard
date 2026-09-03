@@ -1192,6 +1192,21 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         if not df_action_plan.empty:
             st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
             
+            pd.to_datetime
+            # --- TEMPEL KODE INI TEPAT SEBELUM st.data_editor ---
+
+# Ganti 'df_action' dengan nama variabel DataFrame Anda jika berbeda
+df_action["Tanggal Inisiasi"] = pd.to_datetime(df_action["Tanggal Inisiasi"], errors="coerce")
+
+# Lakukan juga untuk kolom tanggal lainnya agar aman
+if "Target Selesai" in df_action.columns:
+    df_action["Target Selesai"] = pd.to_datetime(df_action["Target Selesai"], errors="coerce")
+
+# --- KEMUDIAN LANJUTKAN DENGAN KODE st.data_editor ANDA ---
+edited_df = st.data_editor(
+    df_action,
+    # ... konfigurasi Anda yang sudah ada ...
+)
             edited_df = st.data_editor(
                 df_action_plan,
                 column_config={

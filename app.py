@@ -1136,89 +1136,96 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             st.dataframe(df_filtered, use_container_width=True)
 
         # TABEL MONITORING ACTION PLAN PDCA
-        st.markdown("---")
-        st.markdown(
-            '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
-            unsafe_allow_html=True,
+try:
+    st.markdown("---")
+    st.markdown(
+        '<div class="section-title">Tabel Monitoring Action Plan PDCA (Accountability Control)</div>',
+        unsafe_allow_html=True,
+    )
+
+    df_action_plan = load_or_init_action_plan()
+
+    with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
+        with st.form("form_add_action_plan", clear_on_submit=True):
+            f_col1, f_col2, f_col3 = st.columns(3)
+            with f_col1:
+                tgl_inisiasi = st.date_input("Tanggal Inisiasi")
+                line_target = st.selectbox("Line Produksi", sorted_lines)
+            with f_col2:
+                tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
+                pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
+            with f_col3:
+                target_selesai = st.date_input("Target Selesai")
+                status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
+
+            btn_submit = st.form_submit_button("Simpan Action Plan")
+
+            if btn_submit:
+                if tema_imp.strip() == "" or pic_name.strip() == "":
+                    st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
+                else:
+                    new_row = pd.DataFrame(
+                        [{
+                            "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
+                            "Line Produksi": line_target,
+                            "Tema Improvement": tema_imp.strip(),
+                            "PIC": pic_name.strip(),
+                            "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
+                            "Status": status_initial
+                        }]
+                    )
+                    df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
+                    df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
+                    st.success("Action plan berhasil ditambahkan!")
+                    st.rerun()
+
+    count_total = len(df_action_plan)
+    count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
+    count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
+    count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
+
+    st_c1, st_c2, st_c3, st_c4 = st.columns(4)
+    st_c1.metric("Total Action Plan", count_total)
+    st_c2.metric("Status: Done", count_done)
+    st_c3.metric("Status: On Progress", count_progress)
+    st_c4.metric("Status: Delay", count_delay)
+
+    if not df_action_plan.empty:
+        st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
+        
+        # Format tanggal agar cocok dengan DateColumn Streamlit
+        df_action_plan["Tanggal Inisiasi"] = pd.to_datetime(df_action_plan["Tanggal Inisiasi"], errors="coerce")
+        df_action_plan["Target Selesai"] = pd.to_datetime(df_action_plan["Target Selesai"], errors="coerce")
+
+        edited_df = st.data_editor(
+            df_action_plan,
+            column_config={
+                "Status": st.column_config.SelectboxColumn(
+                    "Status",
+                    help="Status Pekerjaan PDCA",
+                    options=["On Progress", "Done", "Delay"],
+                    required=True,
+                ),
+                "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
+                "Target Selesai": st.column_config.DateColumn("Target Selesai"),
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="action_plan_editor"
         )
 
-        df_action_plan = load_or_init_action_plan()
+        if st.button("Simpan Perubahan Tabel Action Plan"):
+            edited_df_save = edited_df.copy()
+            edited_df_save["Tanggal Inisiasi"] = edited_df_save["Tanggal Inisiasi"].dt.strftime("%Y-%m-%d")
+            edited_df_save["Target Selesai"] = edited_df_save["Target Selesai"].dt.strftime("%Y-%m-%d")
+            edited_df_save.to_csv(ACTION_PLAN_FILE, index=False)
+            st.success("Perubahan Action Plan PDCA berhasil disimpan!")
+            st.rerun()
+    else:
+        st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
 
-        with st.expander("Tambah Action Plan Improvement Baru (+)", expanded=False):
-            with st.form("form_add_action_plan", clear_on_submit=True):
-                f_col1, f_col2, f_col3 = st.columns(3)
-                with f_col1:
-                    tgl_inisiasi = st.date_input("Tanggal Inisiasi")
-                    line_target = st.selectbox("Line Produksi", sorted_lines)
-                with f_col2:
-                    tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
-                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
-                with f_col3:
-                    target_selesai = st.date_input("Target Selesai")
-                    status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])
-
-                btn_submit = st.form_submit_button("Simpan Action Plan")
-
-                if btn_submit:
-                    if tema_imp.strip() == "" or pic_name.strip() == "":
-                        st.warning("Mohon isi Tema Improvement dan PIC terlebih dahulu!")
-                    else:
-                        new_row = pd.DataFrame(
-                            [{
-                                "Tanggal Inisiasi": tgl_inisiasi.strftime("%Y-%m-%d"),
-                                "Line Produksi": line_target,
-                                "Tema Improvement": tema_imp.strip(),
-                                "PIC": pic_name.strip(),
-                                "Target Selesai": target_selesai.strftime("%Y-%m-%d"),
-                                "Status": status_initial
-                            }]
-                        )
-                        df_action_plan = pd.concat([df_action_plan, new_row], ignore_index=True)
-                        df_action_plan.to_csv(ACTION_PLAN_FILE, index=False)
-                        st.success("Action plan berhasil ditambahkan!")
-                        st.rerun()
-
-        count_total = len(df_action_plan)
-        count_done = len(df_action_plan[df_action_plan["Status"] == "Done"]) if count_total > 0 else 0
-        count_progress = len(df_action_plan[df_action_plan["Status"] == "On Progress"]) if count_total > 0 else 0
-        count_delay = len(df_action_plan[df_action_plan["Status"] == "Delay"]) if count_total > 0 else 0
-
-        st_c1, st_c2, st_c3, st_c4 = st.columns(4)
-        st_c1.metric("Total Action Plan", count_total)
-        st_c2.metric("Status: Done", count_done)
-        st_c3.metric("Status: On Progress", count_progress)
-        st_c4.metric("Status: Delay", count_delay)
-
-        if not df_action_plan.empty:
-            st.caption("Ubah status tugas secara langsung pada tabel di bawah ini atau hapus baris jika perlu:")
-            
-            edited_df = st.data_editor(
-                df_action_plan,
-                column_config={
-                    "Status": st.column_config.SelectboxColumn(
-                        "Status",
-                        help="Status Pekerjaan PDCA",
-                        options=["On Progress", "Done", "Delay"],
-                        required=True,
-                    ),
-                    "Tanggal Inisiasi": st.column_config.DateColumn("Tanggal Inisiasi"),
-                    "Target Selesai": st.column_config.DateColumn("Target Selesai"),
-                },
-                num_rows="dynamic",
-                use_container_width=True,
-                key="action_plan_editor"
-            )
-
-            if st.button("Simpan Perubahan Tabel Action Plan"):
-                edited_df.to_csv(ACTION_PLAN_FILE, index=False)
-                st.success("Perubahan Action Plan PDCA berhasil disimpan!")
-                st.rerun()
-        else:
-            st.info("Belum ada Action Plan yang terdaftar. Gunakan tombol 'Tambah Action Plan Improvement Baru (+)' di atas untuk memulai pencatatan PDCA.")
-
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat memproses data: {str(e)}")
-
+except Exception as e:
+    st.error(f"Terjadi kesalahan saat memproses data: {e}")
 else:
     st.markdown(
         '<div class="section-title">A. Executive Summary — Pencapaian OEE Tahunan (Jan - Des)</div>',

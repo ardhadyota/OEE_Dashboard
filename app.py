@@ -511,83 +511,51 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # =========================================================
-        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (EXPLICIT)
+        # SEKSI PARETO ANALYSIS & SIX BIG LOSSES BREAKDOWN (EXPLICIT COLUMNS)
         # =========================================================
         st.markdown(
             '<div class="section-title">Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
             unsafe_allow_html=True,
         )
 
-        # Filter kata kunci kolom kalkulasi/summary agar TIDAK ikut terhitung di Pareto
-        EXCLUDE_KEYWORDS = [
-            "pencapaian",
-            "hitungan",
-            "tercatat",
-            "aktual downtime",
-            "loss_waktu_prod",
-            "prosentase",
-            "selisih",
-            "total",
-            "target",
-            "oee",
-            "avail",
-            "performance",
-            "quality",
-            "tgl",
-            "lineid",
-            "ratio",
-            "oee_pct",
-            "avail_pct",
-            "perf_pct",
-            "qual_pct",
+        # Daftar eksplisit nama kolom Six Big Losses sesuai dengan file Excel Anda
+        EXPLICIT_LOSS_COLS = [
+            "Unplanned Downtime",
+            "Setup & Adjustment",
+            "Idling & Minor Stops",
+            "Reduced Speed",
+            "Process Defects",
+            "Startup Losses",
+            "Planned Shutdown (Non-OEE)",
         ]
 
-        # Ambil kolom Excel yang murni merupakan variabel kerugian (Six Big Losses)
-        six_big_loss_cols = []
-        for c in df_filtered.columns:
-            c_lower = str(c).strip().lower()
-            if not any(ex in c_lower for ex in EXCLUDE_KEYWORDS):
-                six_big_loss_cols.append(c)
+        # Ambil hanya kolom yang terdapat pada sheet Excel yang diunggah
+        available_loss_cols = [
+            col for col in EXPLICIT_LOSS_COLS if col in df_filtered.columns
+        ]
 
         loss_sums = pd.DataFrame()
 
-        if six_big_loss_cols:
-            # Konversi nilai ke numerik
-            df_losses_numeric = df_filtered[six_big_loss_cols].apply(
+        if available_loss_cols:
+            # Konversi data ke numerik untuk menghindari kesalahan perbandingan teks/angka
+            df_losses_numeric = df_filtered[available_loss_cols].apply(
                 lambda c: pd.to_numeric(c, errors="coerce")
             ).fillna(0)
 
-            # Ambil kolom yang total menitnya > 0
-            valid_cols = [
-                col
-                for col in six_big_loss_cols
-                if df_losses_numeric[col].sum() > 0
-            ]
+            loss_sums = df_losses_numeric.sum().reset_index()
+            loss_sums.columns = ["Penyebab_Losses", "Menit"]
+            loss_sums = loss_sums.sort_values(by="Menit", ascending=False)
 
-            if valid_cols:
-                loss_sums = (
-                    df_losses_numeric[valid_cols].sum().reset_index()
-                )
-                loss_sums.columns = ["Penyebab_Losses", "Menit"]
-                loss_sums = loss_sums.sort_values(by="Menit", ascending=False)
-
-        # Fallback jika tidak ditemukan kolom yang sesuai
+        # Jika kolom tidak ditemukan sama sekali di Excel
         if loss_sums.empty:
             loss_sums = pd.DataFrame(
                 {
-                    "Penyebab_Losses": [
-                        "Unplanned Downtime / Breakdown",
-                        "Setup & Adjustments",
-                        "Idling & Minor Stops",
-                        "Reduced Speed",
-                        "Process Defects & Rework",
-                        "Startup Losses",
-                    ],
-                    "Menit": [0, 0, 0, 0, 0, 0],
+                    "Penyebab_Losses": EXPLICIT_LOSS_COLS,
+                    "Menit": [0] * len(EXPLICIT_LOSS_COLS),
                 }
             )
 
-        # Hitung Pareto kumulatif %
+        # Hitung kumulatif Pareto (%)
         loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
         total_loss_min = loss_sums["Menit"].sum()
 
@@ -611,7 +579,7 @@ if uploaded_file is not None:
                     y=loss_sums["Menit"],
                     name="Durasi (Menit)",
                     marker_color="#EF4444",
-                    text=[f"{m:,.0f}m" for m in loss_sums["Menit"]],
+                    text=[f"{m:,.2f}m" if m % 1 != 0 else f"{m:,.0f}m" for m in loss_sums["Menit"]],
                     textposition="outside",
                 ),
                 secondary_y=False,
@@ -643,7 +611,7 @@ if uploaded_file is not None:
                 font=dict(color="#9CA3AF"),
                 height=380,
                 showlegend=False,
-                xaxis=dict(tickangle=-30),
+                xaxis=dict(tickangle=-25),
             )
             fig_pareto.update_yaxes(
                 title_text="Durasi Kerugian (Menit)", secondary_y=False
@@ -671,7 +639,7 @@ if uploaded_file is not None:
             ]
             top_5_display["Durasi (Menit)"] = top_5_display[
                 "Durasi (Menit)"
-            ].apply(lambda x: f"{x:,.0f} menit")
+            ].apply(lambda x: f"{x:,.2f} menit" if x % 1 != 0 else f"{x:,.0f} menit")
             top_5_display["Kumulatif (%)"] = top_5_display[
                 "Kumulatif (%)"
             ].apply(lambda x: f"{x:.1f}%")
@@ -684,7 +652,7 @@ if uploaded_file is not None:
                     min(2, len(top_5_losses) - 1)
                 ]
                 st.caption(
-                    f"**Total Kerugian Operasional:** {total_loss_min:,.0f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
+                    f"**Total Kerugian Operasional:** {total_loss_min:,.2f} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
                 )
 
         st.markdown("---")

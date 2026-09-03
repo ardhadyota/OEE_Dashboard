@@ -259,9 +259,15 @@ uploaded_file = st.sidebar.file_uploader(
 
 st.markdown(
     """
-    <div class="dashboard-header">
-        <div><h1>OEE Executive Analytics</h1><p>Monitoring Performa Line Produksi & Status Kesehatan Operasional</p></div>
-        <div style="text-align:right;"><h3 style="color:#38BDF8;margin:0;">PT. ARGAPURA</h3><p style="color:#94A3B8;margin:0;">ESTABLISHED 1954</p></div>
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="margin: 0;">OEE Executive Analytics</h1>
+            <p style="margin: 0; color: #94A3B8;">Monitoring Performa Line Produksi & Status Kesehatan Operasional</p>
+        </div>
+        <div style="text-align: right;">
+            <h3 style="color: #38BDF8; margin: 0; font-weight: 700;">PT. ARGAPURA</h3>
+            <p style="color: #94A3B8; margin: 0; font-size: 0.85rem; letter-spacing: 1px;">ESTABLISHED 1954</p>
+        </div>
     </div>
 """,
     unsafe_allow_html=True,

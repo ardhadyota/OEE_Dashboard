@@ -379,7 +379,7 @@ if uploaded_file is not None:
         # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
         # -------------------------------------------------------------
         st.markdown(
-            '<div class="section-title">A. Executive Summary — Status Kesehatan Line & Pencapaian Tahunan</div>',
+            '<div class="section-title">A. Executive Summary — Status & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 

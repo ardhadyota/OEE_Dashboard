@@ -1152,7 +1152,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                     line_target = st.selectbox("Line Produksi", sorted_lines)
                 with f_col2:
                     tema_imp = st.text_input("Tema Improvement", placeholder="Contoh: Reduced speed pada extruder")
-                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Agus (Maint) / Budi (Prod)")
+                    pic_name = st.text_input("PIC (Pemilik Tugas)", placeholder="Contoh: Ardha (FM Prod.1) / Dais (GL Butyltape)")
                 with f_col3:
                     target_selesai = st.date_input("Target Selesai")
                     status_initial = st.selectbox("Status Awal", ["On Progress", "Done", "Delay"])

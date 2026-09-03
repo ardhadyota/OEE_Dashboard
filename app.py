@@ -314,19 +314,82 @@ if uploaded_file is not None:
         ] = avg_monthly_all_lines
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
+        # -------------------------------------------------------------
+        # SIDEBAR FILTER DATA (LINE & PERIODE WAKTU / KAIZEN ANALYTICS)
+        # -------------------------------------------------------------
+        st.sidebar.markdown("---")
+        st.sidebar.markdown(
+            "<h4 style='color: #E2E8F0;'>Filter Data</h4>",
+            unsafe_allow_html=True,
+        )
+
+        # 1. Filter Line
+        sorted_lines = sorted(list(df["LineID"].dropna().unique()))
+        lines = ["Semua Line"] + sorted_lines
+        selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
+
+        # 2. Filter Periode Waktu
+        time_filter_option = st.sidebar.radio(
+            "Mode Periode Waktu:",
+            ["Semua Periode (1 Bulan)", "Mingguan (Week 1 - Week 4)", "Custom Range Tanggal"]
+        )
+
+        min_data_date = df["Tgl"].min().date()
+        max_data_date = df["Tgl"].max().date()
+
+        filtered_df_time = df.copy()
+
+        if time_filter_option == "Mingguan (Week 1 - Week 4)":
+            week_choice = st.sidebar.selectbox(
+                "Pilih Minggu:",
+                ["Week 1 (Tgl 1 - 7)", "Week 2 (Tgl 8 - 14)", "Week 3 (Tgl 15 - 21)", "Week 4 (Tgl 22 - End)"]
+            )
+            if "Week 1" in week_choice:
+                filtered_df_time = df[df["Tgl"].dt.day <= 7]
+            elif "Week 2" in week_choice:
+                filtered_df_time = df[(df["Tgl"].dt.day >= 8) & (df["Tgl"].dt.day <= 14)]
+            elif "Week 3" in week_choice:
+                filtered_df_time = df[(df["Tgl"].dt.day >= 15) & (df["Tgl"].dt.day <= 21)]
+            elif "Week 4" in week_choice:
+                filtered_df_time = df[df["Tgl"].dt.day >= 22]
+
+        elif time_filter_option == "Custom Range Tanggal":
+            date_range = st.sidebar.date_input(
+                "Rentang Tanggal (Evaluasi Kaizen):",
+                value=(min_data_date, max_data_date),
+                min_value=min_data_date,
+                max_value=max_data_date
+            )
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_d, end_d = date_range
+                filtered_df_time = df[(df["Tgl"].dt.date >= start_d) & (df["Tgl"].dt.date <= end_d)]
+
+        if filtered_df_time.empty:
+            st.warning("⚠️ Tidak ada data untuk rentang tanggal yang dipilih. Silakan sesuaikan kembali filter periode waktu di sidebar.")
+            st.stop()
+
+        # Data yang sudah di-filter Line & Waktu untuk analisis detail
+        df_filtered = (
+            filtered_df_time.copy()
+            if selected_line == "Semua Line"
+            else filtered_df_time[filtered_df_time["LineID"] == selected_line]
+        )
+
+        # -------------------------------------------------------------
         # SEKSI A: EXECUTIVE SUMMARY & STATUS KESEHATAN LINE
+        # -------------------------------------------------------------
         st.markdown(
             '<div class="section-title">A. Executive Summary — Status Kesehatan Line & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 
-        # REKAP STATUS KESEHATAN SELURUH LINE (MANAGEMENT BY EXCEPTION)
-        df["Target_Line"] = df["LineID"].apply(
+        # REKAP STATUS KESEHATAN SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
+        filtered_df_time["Target_Line"] = filtered_df_time["LineID"].apply(
             lambda x: get_target_by_line(x)["oee"]
         )
 
         all_line_summary = (
-            df.groupby("LineID")
+            filtered_df_time.groupby("LineID")
             .agg({"OEE_pct": "mean", "Target_Line": "first"})
             .reset_index()
         )
@@ -416,20 +479,6 @@ if uploaded_file is not None:
             lambda x: get_target_by_line(x)["qual"]
         )
 
-        st.sidebar.markdown("---")
-        st.sidebar.markdown(
-            "<h4 style='color: #E2E8F0;'>Filter Data</h4>",
-            unsafe_allow_html=True,
-        )
-        sorted_lines = sorted(list(df["LineID"].dropna().unique()))
-        lines = ["Semua Line"] + sorted_lines
-        selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
-
-        df_filtered = (
-            df.copy()
-            if selected_line == "Semua Line"
-            else df[df["LineID"] == selected_line]
-        )
         active_std = (
             DEFAULT_OVERALL_STD
             if selected_line == "Semua Line"
@@ -552,7 +601,7 @@ if uploaded_file is not None:
                 )
             else:
                 line_summary = (
-                    df.groupby("LineID")
+                    filtered_df_time.groupby("LineID")
                     .agg(
                         {
                             "OEE_pct": "mean",
@@ -624,11 +673,7 @@ if uploaded_file is not None:
                 df[col] = df[col].astype(str).str.replace(",", ".").str.strip()
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-        df_filtered_loss = (
-            df.copy()
-            if selected_line == "Semua Line"
-            else df[df["LineID"] == selected_line]
-        )
+        df_filtered_loss = df_filtered.copy()
 
         loss_data = {}
         for col in available_loss_cols:
@@ -757,7 +802,7 @@ if uploaded_file is not None:
             unsafe_allow_html=True,
         )
 
-        df_line_losses = df.groupby("LineID")[available_loss_cols].sum()
+        df_line_losses = filtered_df_time.groupby("LineID")[available_loss_cols].sum()
         df_line_losses = df_line_losses.round(0).astype(int)
 
         df_line_losses["TOTAL_LOSSES"] = df_line_losses.sum(axis=1)
@@ -832,7 +877,7 @@ if uploaded_file is not None:
             unsafe_allow_html=True,
         )
         df_line_ratio = (
-            df.groupby("LineID")
+            filtered_df_time.groupby("LineID")
             .agg({"Target_Line": "first", "OEE_pct": "mean"})
             .reset_index()
         )
@@ -968,13 +1013,13 @@ if uploaded_file is not None:
                     help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
                 )
 
-                df_sim_line = df[df["LineID"] == target_sim_line]
+                df_sim_line = df_filtered[df_filtered["LineID"] == target_sim_line] if selected_line == "Semua Line" else df_filtered
                 num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
                 
-                curr_line_oee = df_sim_line["OEE_pct"].mean()
-                curr_line_avail = df_sim_line["Avail_pct"].mean()
-                curr_line_perf = df_sim_line["Perf_pct"].mean()
-                curr_line_qual = df_sim_line["Qual_pct"].mean()
+                curr_line_oee = df_sim_line["OEE_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_avail = df_sim_line["Avail_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_perf = df_sim_line["Perf_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_qual = df_sim_line["Qual_pct"].mean() if not df_sim_line.empty else 0
                 target_line_oee = get_target_by_line(target_sim_line)["oee"]
 
                 total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0

@@ -329,8 +329,24 @@ if uploaded_file is not None:
         fig_line.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#9CA3AF'), yaxis=dict(title="OEE (%)"), xaxis=dict(title="Tanggal Produksi", type='category', tickangle=-45), height=420, showlegend=False)
         st.plotly_chart(fig_line, use_container_width=True)
 
-        # AI DIAGNOSIS ENGINE (REVISED LOGIC)
-        st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>', unsafe_allow_html=True)
+        # ---------------------------------------------------------------------
+        # STRATEGI MANAJEMEN (MAIN KPI -> SUB KPI -> PROSES KPI)
+        # ---------------------------------------------------------------------
+        st.markdown('<div class="section-title">Peta Strategi Manajemen (KPI Alignment)</div>', unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div style="background-color: #1E2640; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #60A5FA; margin-top: 0;">🎯 Alignment Strategi Pencapaian Target OEE</h4>
+            <p style="margin-bottom: 8px;"><strong>1. Main KPI (Perusahaan):</strong> Mencapai Overall OEE Minimum <strong>94.00%</strong>.</p>
+            <p style="margin-bottom: 8px;"><strong>2. Sub KPI (Lini Produksi):</strong> Memastikan seluruh Production Line mencapai target OEE spesifik masing-masing.</p>
+            <p style="margin-bottom: 0;"><strong>3. Proses KPI (Operasional Harian):</strong> Menjaga 3 faktor utama (Availability, Performance, Quality Rate) agar tidak mengalami defisit dari standar line.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ---------------------------------------------------------------------
+        # AI DIAGNOSIS ENGINE & MATRIKS PRIORITAS PERBAIKAN
+        # ---------------------------------------------------------------------
+        st.markdown('<div class="section-title">AI Executive Insights dan Diagnosis Performa Line: ' + str(selected_line) + '</div>', unsafe_allow_html=True)
         
         # Hitung defisit (Target - Aktual). Nilai positif artinya bermasalah (di bawah target).
         factor_details = {
@@ -338,18 +354,21 @@ if uploaded_file is not None:
                 "defisit": active_std['avail'] - avg_avail, 
                 "actual": avg_avail, 
                 "target": active_std['avail'], 
+                "proses_kpi_desc": "Meningkatkan Operational Uptime & Menekan Downtime",
                 "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED)."
             },
             "Performance": {
                 "defisit": active_std['perf'] - avg_perf, 
                 "actual": avg_perf, 
                 "target": active_std['perf'], 
+                "proses_kpi_desc": "Menjaga Kecepatan Standar Mesin & Menghindari Micro-Stoppages",
                 "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops)."
             },
             "Quality": {
                 "defisit": active_std['qual'] - avg_qual, 
                 "actual": avg_qual, 
                 "target": active_std['qual'], 
+                "proses_kpi_desc": "Menjaga Mutu Material & Meminimalkan Reject / Rework",
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses."
             }
         }
@@ -362,31 +381,31 @@ if uploaded_file is not None:
 
         if problem_factors:
             p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+            header_status = f"Fokus Perbaiki Proses KPI pada Indikator {p1_name}!"
+            desc_status = f"Pada **{selected_line}**, faktor **{p1_name}** merupakan titik penyumbang defisit terbesar yaitu **-{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
             
             prioritas_text = ""
             for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
-                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   - **Fokus Proses KPI:** {fdata['proses_kpi_desc']}\n"
+                prioritas_text += f"   - **Rekomendasi Tindakan:** {fdata['action']}\n\n"
         else:
-            header_status = "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
-            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+            header_status = "Seluruh Proses KPI pada Line Ini Memenuhi Standar!"
+            desc_status = f"Luar biasa! Semua indikator proses (Availability, Performance, Quality) pada **{selected_line}** telah mencapai atau melampaui target spesifiknya."
+            prioritas_text = "Seluruh Proses KPI terpenuhi. Pertahankan ritme kerja dan jalankan perawatan rutin (Preventive Maintenance)."
 
         st.markdown(f"""
 ### Laporan Diagnosis AI: {selected_line}
-Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
+* **Status Main KPI OEE saat ini:** **{avg_oee:.2f}%** (Target Spesifik Line: **{active_std['oee']:.2f}%**)
 
 ---
 
-#### Rekomendasi Utama: {header_status}
+#### 📌 Rekomendasi Strategi Utama: {header_status}
 {desc_status}
 
-#### Urutan Matriks Prioritas Perbaikan:
+#### 📋 Urutan Matriks Prioritas Perbaikan Proses KPI:
 {prioritas_text}
 """)
-
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 

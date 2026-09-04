@@ -1179,6 +1179,6 @@ else:
 
 # FOOTER
 st.markdown(
-    '<div class="footer">PT. ARGAPURA — Operational Excellence & Executive Dashboard &copy; 2026</div>',
+    '<div class="footer">PT. ARGAPURA — Operational Excellence & Executive Dashboard &copy;ardha.2026</div>',
     unsafe_allow_html=True,
 )

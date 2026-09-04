@@ -1138,6 +1138,8 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         # -------------------------------------------------------------
 # SEKSI G: PDCA ACTION PLAN TRACKER (EDITABLE & PERSISTENT)
 # -------------------------------------------------------------
+except Exception as e:
+        st.error(f"Terjadi kesalahan saat memproses data: {e}")
 st.markdown(
     '<div class="section-title">G. Rencana Aksi PDCA & Monitoring Improvement</div>',
     unsafe_allow_html=True,

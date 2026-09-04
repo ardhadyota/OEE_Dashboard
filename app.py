@@ -1136,47 +1136,78 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             st.dataframe(df_filtered, use_container_width=True)
 
         # -------------------------------------------------------------
-        # SEKSI I: PDCA ACTION PLAN TRACKER
-        # -------------------------------------------------------------
-        st.markdown(
-            '<div class="section-title">I. Rencana PDCA & Monitoring Improvement</div>',
-            unsafe_allow_html=True,
+# SEKSI G: PDCA ACTION PLAN TRACKER (EDITABLE & PERSISTENT)
+# -------------------------------------------------------------
+st.markdown(
+    '<div class="section-title">G. Rencana Aksi PDCA & Monitoring Improvement</div>',
+    unsafe_allow_html=True,
+)
+
+# 1. Simpan data ke session state agar tidak hilang saat reload halaman
+if "df_action" not in st.session_state:
+    st.session_state.df_action = load_or_init_action_plan()
+
+# 2. Form Tambah Data Baru
+with st.expander("➕ Tambah Rencana Aksi PDCA Baru", expanded=False):
+    with st.form("add_action_form"):
+        f_date = st.date_input("Tanggal Inisiasi")
+        f_line = st.text_input("Line Produksi")
+        f_tema = st.text_input("Tema / Judul Improvement")
+        f_pic = st.text_input("PIC (Penanggung Jawab)")
+        f_target = st.date_input("Target Selesai")
+        f_status = st.selectbox(
+            "Status", ["Plan", "Do", "Check", "Action", "Closed"]
         )
 
-        df_action = load_or_init_action_plan()
-
-        with st.expander("➕ Tambah Rencana Aksi PDCA Baru", expanded=False):
-            with st.form("add_action_form"):
-                f_date = st.date_input("Tanggal Inisiasi")
-                f_line = st.selectbox("Line Produksi", sorted_lines)
-                f_tema = st.text_input("Tema / Judul Improvement")
-                f_pic = st.text_input("PIC (Penanggung Jawab)")
-                f_target = st.date_input("Target Selesai")
-                f_status = st.selectbox("Status", ["Plan", "Do", "Check", "Action", "Closed"])
-
-                submitted = st.form_submit_button("Simpan Action Plan")
-                if submitted:
-                    new_row = pd.DataFrame([{
+        submitted = st.form_submit_button("Simpan Action Plan")
+        if submitted:
+            new_row = pd.DataFrame(
+                [
+                    {
                         "Tanggal Inisiasi": f_date.strftime("%Y-%m-%d"),
                         "Line Produksi": f_line,
                         "Tema Improvement": f_tema,
                         "PIC": f_pic,
                         "Target Selesai": f_target.strftime("%Y-%m-%d"),
-                        "Status": f_status
-                    }])
-                    df_action = pd.concat([df_action, new_row], ignore_index=True)
-                    df_action.to_csv(ACTION_PLAN_FILE, index=False)
-                    st.success("Rencana aksi berhasil disimpan!")
-                    st.rerun()
+                        "Status": f_status,
+                    }
+                ]
+            )
+            st.session_state.df_action = pd.concat(
+                [st.session_state.df_action, new_row], ignore_index=True
+            )
+            st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
+            st.success("Rencana aksi berhasil disimpan!")
+            st.rerun()
 
-        st.dataframe(df_action, use_container_width=True)
+# 3. Format Penomoran Dimulai Dari 1 & Header "No"
+df_editor_input = st.session_state.df_action.copy()
+df_editor_input.index = range(1, len(df_editor_input) + 1)
+df_editor_input.index.name = "No"
 
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat memproses file: {e}")
+# 4. Tabel Interaktif (Bisa Langsung Diedit)
+edited_df = st.data_editor(
+    df_editor_input,
+    column_config={
+        "Status": st.column_config.SelectboxColumn(
+            "Status",
+            options=["Plan", "Do", "Check", "Action", "Closed"],
+            required=True,
+        )
+    },
+    num_rows="dynamic",
+    use_container_width=True,
+    key="pdca_editor",
+)
 
-else:
-    st.info("💡 Silakan unggah berkas Excel data harian OEE melalui panel kontrol di sebelah kiri untuk memulai analisis.")
-st.markdown(
+# 5. Simpan Otomatis Ke File CSV Saat Ada Perubahan Cell Atau Status
+df_edited_raw = edited_df.reset_index(drop=True)
+if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
+    st.session_state.df_action = df_edited_raw
+    st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
+    st.toast("Perubahan data berhasil disimpan!")
+    
+        st.markdown(
     '<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>',
     unsafe_allow_html=True,
 )

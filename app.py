@@ -659,7 +659,7 @@ if uploaded_file is not None:
             "Unplanned Downtime",
             "Setup & Adjustment",
             "Idling & Minor Stops",
-            "Reduced Speed",
+            "Slow Cycles",
             "Process Defects",
             "Startup Losses",
             "Planned Shutdown (Non-OEE)",

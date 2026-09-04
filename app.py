@@ -871,109 +871,271 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-       # -------------------------------------------------------------
-# SEKSI E: PENCAPAIAN RATING TARGET VS AKTUAL OEE
-# -------------------------------------------------------------
-st.markdown(
-    '<div class="section-title">E. Pencapaian Target vs Aktual OEE (Rasio)</div>',
-    unsafe_allow_html=True,
-)
+        # RATIO PENCAPAIAN
+        st.markdown(
+            '<div class="section-title">E. Ratio Pencapaian per Line [Ratio]</div>',
+            unsafe_allow_html=True,
+        )
+        df_line_ratio = (
+            filtered_df_time.groupby("LineID")
+            .agg({"Target_Line": "first", "OEE_pct": "mean"})
+            .reset_index()
+        )
+        df_line_ratio["Target_Line"] = df_line_ratio["Target_Line"].replace(
+            0, 1
+        )
+        df_line_ratio["Ratio"] = (
+            df_line_ratio["OEE_pct"] / df_line_ratio["Target_Line"]
+        )
+        df_line_ratio["Selisih_pct"] = (
+            df_line_ratio["OEE_pct"] - df_line_ratio["Target_Line"]
+        )
+        df_line_ratio = df_line_ratio.sort_values(by="Ratio", ascending=False)
 
-# 1. Pastikan kolom tanggal berupa datetime dan data terurut
-df_chart = df_filtered.copy()
-df_chart["Tanggal"] = pd.to_datetime(df_chart["Tanggal"])
-df_chart = df_chart.sort_values("Tanggal")
+        ratio_colors = [
+            "#60A5FA" if r >= 1.0 else "#F87171" for r in df_line_ratio["Ratio"]
+        ]
 
-# 2. Agregasi Rata-rata OEE per Tanggal (atau per Line jika diperlukan)
-df_grouped = (
-    df_chart.groupby(df_chart["Tanggal"].dt.strftime("%Y-%m-%d"))["OEE (%)"]
-    .mean()
-    .reset_index()
-)
+        fig_ratio = go.Figure()
+        hover_texts = [
+            f"<b>{line}</b><br>Target: {tgt:.2f}%<br>Aktual: {oee:.2f}%<br>Selisih: {sel:+.2f}%<br>Ratio: {r:.3f}"
+            for line, tgt, oee, sel, r in zip(
+                df_line_ratio["LineID"],
+                df_line_ratio["Target_Line"],
+                df_line_ratio["OEE_pct"],
+                df_line_ratio["Selisih_pct"],
+                df_line_ratio["Ratio"],
+            )
+        ]
 
-# 3. Tentukan Target OEE (Contoh: 85%)
-TARGET_OEE = 85.0
+        fig_ratio.add_trace(
+            go.Bar(
+                x=df_line_ratio["LineID"],
+                y=df_line_ratio["Ratio"],
+                marker_color=ratio_colors,
+                text=[f"{r:.3f}" for r in df_line_ratio["Ratio"]],
+                textposition="outside",
+                hoverinfo="text",
+                hovertext=hover_texts,
+            )
+        )
+        fig_ratio.add_shape(
+            type="line",
+            x0=-0.5,
+            x1=len(df_line_ratio["LineID"]) - 0.5,
+            y0=1.0,
+            y1=1.0,
+            line=dict(color="#EF4444", width=3),
+        )
+        fig_ratio.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#9CA3AF"),
+            yaxis=dict(
+                title="[Ratio]",
+                range=[0, max(df_line_ratio["Ratio"].max() * 1.15, 1.3)],
+            ),
+            xaxis=dict(title="", tickangle=-45),
+            height=430,
+            showlegend=False,
+        )
+        st.plotly_chart(fig_ratio, use_container_width=True)
 
-# 4. Hitung Rasio Pencapaian (%) = (Aktual / Target) * 100
-df_grouped["Achievement (%)"] = (df_grouped["OEE (%)"] / TARGET_OEE) * 100
-
-# 5. Urutkan dari pencapaian tertinggi ke terendah
-# (Menjamin data yang tidak tercapai berada di paling kanan)
-df_grouped = df_grouped.sort_values(
-    by="Achievement (%)", ascending=False
-).reset_index(drop=True)
-
-# 6. Pewarnaan Conditional: Merah untuk < 100% (Tidak Tercapai), Hijau untuk >= 100%
-colors = [
-    "#EF553B" if val < 100.0 else "#00CC96"
-    for val in df_grouped["Achievement (%)"]
-]
-
-# 7. Membuat Bar Chart Plotly
-fig = go.Figure()
-
-# Tambahkan Bar Chart Rasio
-fig.add_trace(
-    go.Bar(
-        x=df_grouped["Tanggal"],
-        y=df_grouped["Achievement (%)"],
-        marker_color=colors,
-        text=[f"{val:.1f}%" for val in df_grouped["Achievement (%)"]],
-        textposition="auto",
-        name="Pencapaian Ratio",
-        hovertemplate="Tanggal: %{x}<br>Ratio Pencapaian: %{y:.2f}%<extra></extra>",
-    )
-)
-
-# Tambahkan Garis Ambang Target (100% Ratio)
-fig.add_shape(
-    type="line",
-    x0=-0.5,
-    x1=len(df_grouped) - 0.5,
-    y0=100,
-    y1=100,
-    line=dict(color="White", width=2, dash="dash"),
-)
-
-# Tampilan Layout
-fig.update_layout(
-    title=f"Rasio Pencapaian OEE terhadap Target ({TARGET_OEE}%)",
-    xaxis_title="Tanggal (Diurutkan dari Pencapaian Tertinggi ke Terendah)",
-    yaxis_title="Rasio Pencapaian (%)",
-    yaxis=dict(range=[0, max(df_grouped["Achievement (%)"].max() + 15, 110)]),
-    template="plotly_dark",
-    height=450,
-)
-
-st.plotly_chart(fig, use_container_width=True)
         st.markdown("---")
 
-        # -------------------------------------------------------------
-        # SEKSI F: SIMULASI WHAT-IF OEE
-        # -------------------------------------------------------------
+        # TREND HARIAN
         st.markdown(
-            '<div class="section-title">F. Simulasi & Target Improvement OEE (What-If Analysis)</div>',
+            f'<div class="section-title">F. Tren Pencapaian OEE Harian Line {selected_line}</div>',
+            unsafe_allow_html=True,
+        )
+        df_daily = (
+            df_filtered.groupby("Tgl")["OEE_pct"].mean().reset_index()
+        )
+        df_daily["Tgl_Str"] = df_daily["Tgl"].dt.strftime("%d %b %Y")
+
+        fig_line = go.Figure()
+        fig_line.add_trace(
+            go.Scatter(
+                x=df_daily["Tgl_Str"],
+                y=df_daily["OEE_pct"],
+                mode="lines+markers",
+                line=dict(color="#10B981", width=3),
+                marker=dict(size=8, color="#34D399"),
+                text=[f"{val:.1f}%" for val in df_daily["OEE_pct"]],
+                hoverinfo="x+text",
+            )
+        )
+        fig_line.add_hline(
+            y=active_std["oee"],
+            line_dash="dash",
+            line_color="#EF4444",
+            line_width=2,
+            annotation_text=f"Target Line ({active_std['oee']:.2f}%)",
+            annotation_position="top right",
+        )
+        fig_line.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#9CA3AF"),
+            yaxis=dict(title="OEE (%)"),
+            xaxis=dict(title="Tanggal Produksi", type="category", tickangle=-45),
+            height=420,
+            showlegend=False,
+        )
+        st.plotly_chart(fig_line, use_container_width=True)
+
+        # SEKSI KALKULATOR SIMULASI WHAT-IF
+        st.markdown("---")
+        st.markdown(
+            '<div class="section-title">G. Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
             unsafe_allow_html=True,
         )
 
-        st.markdown('<div class="sim-card">', unsafe_allow_html=True)
-        s_col1, s_col2, s_col3 = st.columns(3)
-        with s_col1:
-            sim_avail = st.slider("Simulasi Availability (%)", 0.0, 100.0, float(avg_avail), 0.1)
-        with s_col2:
-            sim_perf = st.slider("Simulasi Performance (%)", 0.0, 100.0, float(avg_perf), 0.1)
-        with s_col3:
-            sim_qual = st.slider("Simulasi Quality (%)", 0.0, 100.0, float(avg_qual), 0.1)
+        with st.container():
+            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
+            st.markdown("#### Simulasi Dampak Pengurangan Downtime Terhadap OEE")
+            
+            sim_col_input, sim_col_output = st.columns([1, 1.2])
 
-        sim_oee = (sim_avail / 100.0) * (sim_perf / 100.0) * (sim_qual / 100.0) * 100.0
-        delta_sim = sim_oee - avg_oee
+            with sim_col_input:
+                target_sim_line = st.selectbox(
+                    "Pilih Line untuk Simulasi:", 
+                    sorted_lines, 
+                    index=sorted_lines.index(selected_line) if selected_line in sorted_lines else 0,
+                    key="sim_line_select"
+                )
+                downtime_reduction_pct = st.slider(
+                    f"Target Pengurangan Unplanned Downtime (%):",
+                    min_value=0,
+                    max_value=100,
+                    value=20,
+                    step=5,
+                    help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
+                )
 
-        st.markdown(f"### Proyeksi OEE Hasil Simulasi: **{sim_oee:.2f}%** ({delta_sim:+.2f}% vs Aktual Saat Ini)")
-        st.markdown('</div>', unsafe_allow_html=True)
+                df_sim_line = df_filtered[df_filtered["LineID"] == target_sim_line] if selected_line == "Semua Line" else df_filtered
+                num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
+                
+                curr_line_oee = df_sim_line["OEE_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_avail = df_sim_line["Avail_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_perf = df_sim_line["Perf_pct"].mean() if not df_sim_line.empty else 0
+                curr_line_qual = df_sim_line["Qual_pct"].mean() if not df_sim_line.empty else 0
+                target_line_oee = get_target_by_line(target_sim_line)["oee"]
+
+                total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0
+                dt_saved_min = total_unplanned_dt * (downtime_reduction_pct / 100.0)
+                remaining_dt_min = total_unplanned_dt - dt_saved_min
+
+                total_planned_operating_time = (num_days * 24 * 60)
+                
+                if total_planned_operating_time > 0 and total_unplanned_dt > 0:
+                    sim_avail = ((total_planned_operating_time - remaining_dt_min) / total_planned_operating_time) * 100.0
+                    sim_avail = min(sim_avail, 100.0)
+                else:
+                    sim_avail = curr_line_avail + (100.0 - curr_line_avail) * (downtime_reduction_pct / 100.0)
+
+                sim_oee = (sim_avail / 100.0) * (curr_line_perf / 100.0) * (curr_line_qual / 100.0) * 100.0
+                oee_gain = sim_oee - curr_line_oee
+
+            with sim_col_output:
+                st.markdown(f"**Proyeksi Perbaikan untuk Line: {target_sim_line}**")
+                
+                s_c1, s_c2, s_c3 = st.columns(3)
+                s_c1.metric("OEE Saat Ini", f"{curr_line_oee:.2f}%")
+                s_c2.metric("Proyeksi OEE Baru", f"{sim_oee:.2f}%", delta=f"+{oee_gain:.2f}%")
+                s_c3.metric("Target OEE Line", f"{target_line_oee:.2f}%")
+
+                dt_per_day_target = (remaining_dt_min / num_days) if num_days > 0 else 0
+                
+                if sim_oee >= target_line_oee:
+                    st.success(
+                        f"✅ **Target Tercapai!** Dengan menurunkan Downtime sebesar **{downtime_reduction_pct}%** "
+                        f"(menghemat **{int(dt_saved_min):,} menit**), OEE Line diproyeksikan naik menjadi **{sim_oee:.2f}%** "
+                        f"(Melampaui target **{target_line_oee:.2f}%**)."
+                    )
+                else:
+                    st.warning(
+                        f"⚠️ **Masih Perlu Perbaikan:** Penurunan Downtime **{downtime_reduction_pct}%** meningkatkan OEE ke **{sim_oee:.2f}%**, "
+                        f"namun masih kurang **{(target_line_oee - sim_oee):.2f}%** dari target. Kombinasikan dengan perbaikan *Speed Loss* / *Setup Time*."
+                    )
+
+                st.info(
+                    f"💡 **Target Mingguan/Harian Tim Production:** Batasi total Unplanned Downtime maksimal **{int(dt_per_day_target)} menit/hari** "
+                    f"(atau **{int(dt_per_day_target * 7)} menit/minggu**) untuk memastikan target OEE tercapai sebelum akhir bulan."
+                )
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
 
-        # -------------------------------------------------------------
+        # DIAGNOSIS AI
+        st.markdown(
+            '<div class="section-title">AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
+            unsafe_allow_html=True,
+        )
+
+        factor_details = {
+            "Availability": {
+                "defisit": active_std["avail"] - avg_avail,
+                "actual": avg_avail,
+                "target": active_std["avail"],
+                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
+            },
+            "Performance": {
+                "defisit": active_std["perf"] - avg_perf,
+                "actual": avg_perf,
+                "target": active_std["perf"],
+                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
+            },
+            "Quality": {
+                "defisit": active_std["qual"] - avg_qual,
+                "actual": avg_qual,
+                "target": active_std["qual"],
+                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
+            },
+        }
+
+        problem_factors = [
+            (name, data)
+            for name, data in factor_details.items()
+            if data["defisit"] > 0.001
+        ]
+        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
+
+        if problem_factors:
+            p1_name, p1_val = problem_factors[0]
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+
+            prioritas_text = ""
+            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
+        else:
+            header_status = (
+                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            )
+            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+
+        st.markdown(
+            f"""
+### Laporan Diagnosis AI: {selected_line}
+Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
+
+---
+
+#### Rekomendasi Utama: {header_status}
+{desc_status}
+
+#### Urutan Matriks Prioritas Perbaikan:
+{prioritas_text}
+"""
+        )
+        with st.expander("Lihat Data Excel Mentah Detail"):
+            st.dataframe(df_filtered, use_container_width=True)
+
+         # -------------------------------------------------------------
         # SEKSI G: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------
         st.markdown(

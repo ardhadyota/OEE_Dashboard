@@ -871,31 +871,81 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # -------------------------------------------------------------
-        # SEKSI E: TREN OEE HARIAN & EKSPLORASI DATA
-        # -------------------------------------------------------------
-        st.markdown(
-            '<div class="section-title">E. Tren Performa OEE Harian & Komponen Utama</div>',
-            unsafe_allow_html=True,
-        )
+       # -------------------------------------------------------------
+# SEKSI E: PENCAPAIAN RATING TARGET VS AKTUAL OEE
+# -------------------------------------------------------------
+st.markdown(
+    '<div class="section-title">E. Pencapaian Target vs Aktual OEE (Rasio)</div>',
+    unsafe_allow_html=True,
+)
 
-        fig_daily = go.Figure()
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["OEE_pct"], mode="lines+markers", name="OEE (%)", line=dict(color="#38BDF8", width=2)))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Avail_pct"], mode="lines", name="Availability (%)", line=dict(color="#10B981", dash="dash")))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Perf_pct"], mode="lines", name="Performance (%)", line=dict(color="#F59E0B", dash="dash")))
-        fig_daily.add_trace(go.Scatter(x=df_filtered["Tgl"], y=df_filtered["Qual_pct"], mode="lines", name="Quality (%)", line=dict(color="#A855F7", dash="dash")))
+# 1. Pastikan kolom tanggal berupa datetime dan data terurut
+df_chart = df_filtered.copy()
+df_chart["Tanggal"] = pd.to_datetime(df_chart["Tanggal"])
+df_chart = df_chart.sort_values("Tanggal")
 
-        fig_daily.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#9CA3AF"),
-            xaxis=dict(title="Tanggal"),
-            yaxis=dict(title="Persentase (%)", range=[0, 105]),
-            height=380,
-            hovermode="x unified"
-        )
-        st.plotly_chart(fig_daily, use_container_width=True)
+# 2. Agregasi Rata-rata OEE per Tanggal (atau per Line jika diperlukan)
+df_grouped = (
+    df_chart.groupby(df_chart["Tanggal"].dt.strftime("%Y-%m-%d"))["OEE (%)"]
+    .mean()
+    .reset_index()
+)
 
+# 3. Tentukan Target OEE (Contoh: 85%)
+TARGET_OEE = 85.0
+
+# 4. Hitung Rasio Pencapaian (%) = (Aktual / Target) * 100
+df_grouped["Achievement (%)"] = (df_grouped["OEE (%)"] / TARGET_OEE) * 100
+
+# 5. Urutkan dari pencapaian tertinggi ke terendah
+# (Menjamin data yang tidak tercapai berada di paling kanan)
+df_grouped = df_grouped.sort_values(
+    by="Achievement (%)", ascending=False
+).reset_index(drop=True)
+
+# 6. Pewarnaan Conditional: Merah untuk < 100% (Tidak Tercapai), Hijau untuk >= 100%
+colors = [
+    "#EF553B" if val < 100.0 else "#00CC96"
+    for val in df_grouped["Achievement (%)"]
+]
+
+# 7. Membuat Bar Chart Plotly
+fig = go.Figure()
+
+# Tambahkan Bar Chart Rasio
+fig.add_trace(
+    go.Bar(
+        x=df_grouped["Tanggal"],
+        y=df_grouped["Achievement (%)"],
+        marker_color=colors,
+        text=[f"{val:.1f}%" for val in df_grouped["Achievement (%)"]],
+        textposition="auto",
+        name="Pencapaian Ratio",
+        hovertemplate="Tanggal: %{x}<br>Ratio Pencapaian: %{y:.2f}%<extra></extra>",
+    )
+)
+
+# Tambahkan Garis Ambang Target (100% Ratio)
+fig.add_shape(
+    type="line",
+    x0=-0.5,
+    x1=len(df_grouped) - 0.5,
+    y0=100,
+    y1=100,
+    line=dict(color="White", width=2, dash="dash"),
+)
+
+# Tampilan Layout
+fig.update_layout(
+    title=f"Rasio Pencapaian OEE terhadap Target ({TARGET_OEE}%)",
+    xaxis_title="Tanggal (Diurutkan dari Pencapaian Tertinggi ke Terendah)",
+    yaxis_title="Rasio Pencapaian (%)",
+    yaxis=dict(range=[0, max(df_grouped["Achievement (%)"].max() + 15, 110)]),
+    template="plotly_dark",
+    height=450,
+)
+
+st.plotly_chart(fig, use_container_width=True)
         st.markdown("---")
 
         # -------------------------------------------------------------

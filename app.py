@@ -1206,6 +1206,11 @@ if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
     st.session_state.df_action = df_edited_raw
     st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
     st.toast("Perubahan data berhasil disimpan!")
+
+    st.info(
+        "Silakan unggah file Excel data OEE harian di sidebar untuk menganalisis per line dan memperbarui tren bulanan."
+    )
+
     
         st.markdown(
     '<div class="footer">copyright ardha_dyota - PT. ARGAPURA 2026</div>',

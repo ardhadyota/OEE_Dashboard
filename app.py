@@ -7,96 +7,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# ==========================================
-# FUNGSI AI EXECUTIVE INSIGHTS & DIAGNOSIS
-# ==========================================
-def render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual):
-    try:
-        st.markdown(
-            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
-            unsafe_allow_html=True,
-        )
-
-        factor_details = {
-            "Availability": {
-                "defisit": active_std["avail"] - avg_avail,
-                "actual": avg_avail,
-                "target": active_std["avail"],
-                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
-            },
-            "Performance": {
-                "defisit": active_std["perf"] - avg_perf,
-                "actual": avg_perf,
-                "target": active_std["perf"],
-                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
-            },
-            "Quality": {
-                "defisit": active_std["qual"] - avg_qual,
-                "actual": avg_qual,
-                "target": active_std["qual"],
-                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
-            },
-        }
-
-        problem_factors = [
-            (name, data)
-            for name, data in factor_details.items()
-            if data["defisit"] > 0.001
-        ]
-        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
-
-        if problem_factors:
-            p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            st.warning(f"⚠️ **{header_status}**")
-            st.write(factor_details[p1_name]["action"])
-
-        # ANALISIS LOSS TIME (Pencegah Blind Spot Target Rendah)
-        loss_setup = df_filtered["Setup & Adjustment"].sum() if "Setup & Adjustment" in df_filtered.columns else 0
-        loss_downtime = df_filtered["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_filtered.columns else 0
-        loss_stops = df_filtered["Idling & Minor Stops"].sum() if "Idling & Minor Stops" in df_filtered.columns else 0
-
-        slow_col = "Slow Cycles" if "Slow Cycles" in df_filtered.columns else "Reduced Speed"
-        loss_slow = df_filtered[slow_col].sum() if slow_col in df_filtered.columns else 0
-
-        loss_summary = {
-            "Setup & Adjustment": loss_setup,
-            "Unplanned Downtime": loss_downtime,
-            "Idling & Minor Stops": loss_stops,
-            "Slow Cycles": loss_slow,
-        }
-
-        top_loss_type = max(loss_summary, key=loss_summary.get)
-        top_loss_minutes = loss_summary[top_loss_type]
-
-        if top_loss_type in df_filtered.columns:
-            line_loss = df_filtered.groupby("Line Produksi")[top_loss_type].sum().sort_values(ascending=False)
-            worst_line = line_loss.index[0] if not line_loss.empty else "-"
-            worst_line_minutes = line_loss.iloc[0] if not line_loss.empty else 0
-        else:
-            worst_line, worst_line_minutes = "-", 0
-
-        # Jika Loss Time > 120 Menit (Meskipun OEE Tercapai)
-        if top_loss_minutes > 120 and not problem_factors:
-            st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
-            st.markdown(
-                f"""
-                Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
-
-                **Langkah Perbaikan Prioritas AI:**
-                * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
-                * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
-                * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
-                """
-            )
-        elif not problem_factors:
-            st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
-            st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
-
-    except Exception as e:
-        st.error(f"Terjadi kesalahan pada analisis AI (Seksi H): {e}")
-
-
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(
     page_title="OEE Executive Analytics - PT. ARGAPURA",
@@ -1168,25 +1078,73 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # ==========================================
-    # G. MATRIKS PRIORITAS PERBAIKAN
-    # ==========================================
-    try:
+        # DIAGNOSIS AI
         st.markdown(
-            '<div class="section-title">G. Matriks Prioritas Perbaikan</div>',
+            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
             unsafe_allow_html=True,
         )
-        # (Seluruh kode grafik/tabel Seksi G Anda ada di dalam sini)
 
-    except Exception as e:
-        st.error(f"Terjadi kesalahan pada Seksi G: {e}")
+        factor_details = {
+            "Availability": {
+                "defisit": active_std["avail"] - avg_avail,
+                "actual": avg_avail,
+                "target": active_std["avail"],
+                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
+            },
+            "Performance": {
+                "defisit": active_std["perf"] - avg_perf,
+                "actual": avg_perf,
+                "target": active_std["perf"],
+                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
+            },
+            "Quality": {
+                "defisit": active_std["qual"] - avg_qual,
+                "actual": avg_qual,
+                "target": active_std["qual"],
+                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
+            },
+        }
 
-    # ==========================================
-    # H. AI EXECUTIVE INSIGHTS & DIAGNOSIS
-    # ==========================================
-    render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual)
+        problem_factors = [
+            (name, data)
+            for name, data in factor_details.items()
+            if data["defisit"] > 0.001
+        ]
+        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-        
+        if problem_factors:
+            p1_name, p1_val = problem_factors[0]
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+
+            prioritas_text = ""
+            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
+        else:
+            header_status = (
+                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            )
+            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+
+        st.markdown(
+            f"""
+### Laporan Diagnosis AI: {selected_line}
+Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
+
+---
+
+#### Rekomendasi Utama: {header_status}
+{desc_status}
+
+#### Urutan Matriks Prioritas Perbaikan:
+{prioritas_text}
+"""
+        )
+        with st.expander("Lihat Data Excel Mentah Detail"):
+            st.dataframe(df_filtered, use_container_width=True)
+
          # -------------------------------------------------------------
         # SEKSI G: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------
@@ -1228,7 +1186,7 @@ if uploaded_file is not None:
         df_editor_input = st.session_state.df_action.copy()
         df_editor_input.insert(0, "No", range(1, len(df_editor_input) + 1))
 
-        # 3. Tabel Interaktif (Edit Status & Hapus Baris)
+# 3. Tabel Interaktif (Edit Status & Hapus Baris)
         edited_df = st.data_editor(
             df_editor_input,
             hide_index=True,  # Sembunyikan index bawaan abu-abu
@@ -1250,7 +1208,7 @@ if uploaded_file is not None:
             key="pdca_editor",
         )
 
-        # 4. Deteksi perubahan (Edit Data atau Hapus Baris)
+# 4. Deteksi perubahan (Edit Data atau Hapus Baris)
         # Buang kolom "No" sesaat untuk membandingkan isi data aslinya
         df_edited_raw = edited_df.drop(columns=["No"]).reset_index(drop=True)
         

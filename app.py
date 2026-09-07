@@ -1172,15 +1172,20 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                     st.success("Rencana aksi berhasil disimpan!")
                     st.rerun()
 
-        # 2. Atur penomoran tabel mulai dari 1 dengan nama header "No"
+# 2. Siapkan data: Sisipkan kolom "No" di urutan paling awal
         df_editor_input = st.session_state.df_action.copy()
-        df_editor_input.index = range(1, len(df_editor_input) + 1)
-        df_editor_input.index.name = "No"
+        df_editor_input.insert(0, "No", range(1, len(df_editor_input) + 1))
 
-        # 3. Gunakan st.data_editor agar status bisa diubah langsung via dropdown di dalam tabel
+        # 3. Tabel Interaktif (Edit Status & Hapus Baris)
         edited_df = st.data_editor(
             df_editor_input,
+            hide_index=True,  # Sembunyikan index bawaan abu-abu
             column_config={
+                "No": st.column_config.NumberColumn(
+                    "No",
+                    disabled=True,  # Kunci agar tidak bisa diedit manual
+                    width="small"
+                ),
                 "Status": st.column_config.SelectboxColumn(
                     "Status",
                     help="Pilih status PDCA",
@@ -1188,17 +1193,21 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                     required=True,
                 )
             },
-            num_rows="dynamic",
+            num_rows="dynamic",  # Mengaktifkan fitur hapus/tambah baris
             use_container_width=True,
             key="pdca_editor",
         )
 
-        # 4. Deteksi perubahan pada tabel dan simpan otomatis ke CSV
-        df_edited_raw = edited_df.reset_index(drop=True)
+        # 4. Deteksi perubahan (Edit Data atau Hapus Baris)
+        # Buang kolom "No" sesaat untuk membandingkan isi data aslinya
+        df_edited_raw = edited_df.drop(columns=["No"]).reset_index(drop=True)
+        
+        # Jika terdeteksi ada perbedaan (status berubah atau baris dihapus)
         if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
             st.session_state.df_action = df_edited_raw
             st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
             st.toast("Perubahan data berhasil disimpan!")
+            st.rerun()  # Muat ulang tampilan agar nomor urut tersusun kembali dari 1
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses file: {e}")

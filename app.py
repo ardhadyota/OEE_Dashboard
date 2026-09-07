@@ -1113,10 +1113,10 @@ if uploaded_file is not None:
         problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
         if problem_factors:
-        p1_name, p1_val = problem_factors[0]
-        header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-        st.warning(f"⚠️ **{header_status}**")
-        st.write(factor_details[p1_name]["action"])
+            p1_name, p1_val = problem_factors[0]
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            st.warning(f"⚠️ **{header_status}**")
+            st.write(factor_details[p1_name]["action"])
 
     # ANALISIS LOSS TIME (Pencegah Blind Spot Target Rendah)
     loss_setup = df_filtered["Setup & Adjustment"].sum() if "Setup & Adjustment" in df_filtered.columns else 0

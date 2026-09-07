@@ -1168,73 +1168,10 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # DIAGNOSIS AI
-        st.markdown(
-            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
-            unsafe_allow_html=True,
-        )
+# H. AI EXECUTIVE INSIGHTS & DIAGNOSIS
+    render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual)
 
-        factor_details = {
-            "Availability": {
-                "defisit": active_std["avail"] - avg_avail,
-                "actual": avg_avail,
-                "target": active_std["avail"],
-                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
-            },
-            "Performance": {
-                "defisit": active_std["perf"] - avg_perf,
-                "actual": avg_perf,
-                "target": active_std["perf"],
-                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
-            },
-            "Quality": {
-                "defisit": active_std["qual"] - avg_qual,
-                "actual": avg_qual,
-                "target": active_std["qual"],
-                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
-            },
-        }
-
-        problem_factors = [
-            (name, data)
-            for name, data in factor_details.items()
-            if data["defisit"] > 0.001
-        ]
-        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
-
-        if problem_factors:
-            p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
-
-            prioritas_text = ""
-            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
-                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
-        else:
-            header_status = (
-                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-            )
-            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
-            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
-
-        st.markdown(
-            f"""
-### Laporan Diagnosis AI: {selected_line}
-Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
-
----
-
-#### Rekomendasi Utama: {header_status}
-{desc_status}
-
-#### Urutan Matriks Prioritas Perbaikan:
-{prioritas_text}
-"""
-        )
-        with st.expander("Lihat Data Excel Mentah Detail"):
-            st.dataframe(df_filtered, use_container_width=True)
-
+        
          # -------------------------------------------------------------
         # SEKSI G: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------

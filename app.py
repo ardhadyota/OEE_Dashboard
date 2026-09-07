@@ -82,18 +82,8 @@ ACTION_PLAN_FILE = "action_plan_pdca.csv"
 
 def load_or_init_monthly_summary():
     months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ]
     if os.path.exists(SUMMARY_FILE):
         return pd.read_csv(SUMMARY_FILE)
@@ -114,9 +104,7 @@ def load_or_init_action_plan():
     ]
     if os.path.exists(ACTION_PLAN_FILE):
         try:
-            # Baca CSV dan pastikan nilai kosong tidak bikin error
             df = pd.read_csv(ACTION_PLAN_FILE, dtype=str).fillna("")
-            # Pastikan semua kolom utama tersedia
             for col in cols:
                 if col not in df.columns:
                     df[col] = ""
@@ -124,13 +112,11 @@ def load_or_init_action_plan():
         except Exception:
             pass
 
-    # Buat file baru jika belum ada atau rusak
     df_init = pd.DataFrame(columns=cols)
     df_init.to_csv(ACTION_PLAN_FILE, index=False)
     return df_init
 
 
-# FUNGSI PENENTU STATUS LINE
 def get_health_status(oee_actual, oee_target):
     if oee_actual < (oee_target - 5.0):
         return "🔴 Critical Alert", "critical"
@@ -140,82 +126,26 @@ def get_health_status(oee_actual, oee_target):
         return "🟢 On Track", "ontrack"
 
 
-# 3. KAMUS TARGET SPESIFIK LINE
 LINE_STANDARDS = {
-    "BUTYL TAPE LINE 1": {
-        "avail": 99.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 96.74,
-    },
-    "BUTYL TAPE LINE 2": {
-        "avail": 99.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 96.74,
-    },
-    "BUTYL TAPE LINE 3": {
-        "avail": 99.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 96.74,
-    },
-    "BUTYL TAPE LINE 4": {
-        "avail": 99.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 96.74,
-    },
-    "BUTYL TAPE LINE 5": {
-        "avail": 99.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 96.74,
-    },
+    "BUTYL TAPE LINE 1": {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
+    "BUTYL TAPE LINE 2": {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
+    "BUTYL TAPE LINE 3": {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
+    "BUTYL TAPE LINE 4": {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
+    "BUTYL TAPE LINE 5": {"avail": 99.0, "perf": 98.0, "qual": 100.00, "oee": 96.74},
     "BTP MIXING": {"avail": 98.0, "perf": 99.0, "qual": 100.00, "oee": 96.74},
     "DFOAM ASSY 1": {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
     "DFOAM ASSY 2": {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
     "DFOAM ASSY 3": {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
     "DFOAM ASSY 4": {"avail": 98.0, "perf": 100.0, "qual": 100.00, "oee": 98.00},
-    "PAD PILLAR NOUTONG": {
-        "avail": 80.0,
-        "perf": 100.0,
-        "qual": 100.00,
-        "oee": 80.00,
-    },
+    "PAD PILLAR NOUTONG": {"avail": 80.0, "perf": 100.0, "qual": 100.00, "oee": 80.00},
     "STF PUNCHING": {"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
-    "STF PUNCHING 1": {
-        "avail": 100.0,
-        "perf": 98.0,
-        "qual": 100.00,
-        "oee": 97.83,
-    },
+    "STF PUNCHING 1": {"avail": 100.0, "perf": 98.0, "qual": 100.00, "oee": 97.83},
     "PVC LINE MC 1": {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
     "PVC LINE MC 2": {"avail": 93.0, "perf": 99.0, "qual": 99.95, "oee": 92.35},
-    "SPOT MASTIC MIX. 1": {
-        "avail": 93.0,
-        "perf": 100.0,
-        "qual": 100.00,
-        "oee": 93.48,
-    },
-    "SPOT MASTIC MIX. 2": {
-        "avail": 93.0,
-        "perf": 100.0,
-        "qual": 100.00,
-        "oee": 93.48,
-    },
-    "STF EXTRUDING SHIFT 1": {
-        "avail": 90.0,
-        "perf": 100.0,
-        "qual": 100.00,
-        "oee": 90.00,
-    },
-    "STF EXTRUDING SHIFT 2": {
-        "avail": 90.0,
-        "perf": 100.0,
-        "qual": 100.00,
-        "oee": 90.00,
-    },
+    "SPOT MASTIC MIX. 1": {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
+    "SPOT MASTIC MIX. 2": {"avail": 93.0, "perf": 100.0, "qual": 100.00, "oee": 93.48},
+    "STF EXTRUDING SHIFT 1": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
+    "STF EXTRUDING SHIFT 2": {"avail": 90.0, "perf": 100.0, "qual": 100.00, "oee": 90.00},
     "STF MIXING ": {"avail": 92.0, "perf": 100.0, "qual": 100.00, "oee": 92.00},
 }
 
@@ -227,7 +157,6 @@ def get_target_by_line(line_name):
         return DEFAULT_OVERALL_STD
 
     clean_name = line_name.upper().strip()
-
     if clean_name in LINE_STANDARDS:
         return LINE_STANDARDS[clean_name]
 
@@ -243,6 +172,87 @@ def get_target_by_line(line_name):
             return LINE_STANDARDS[key]
 
     return DEFAULT_OVERALL_STD
+
+
+# FUNGSI AI EXECUTIVE INSIGHTS (LOGIKA BARU DENGAN DETEKSI LOSS TIME)
+def render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual, selected_line):
+    st.markdown(
+        '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
+        unsafe_allow_html=True,
+    )
+
+    factor_details = {
+        "Availability": {
+            "defisit": active_std["avail"] - avg_avail,
+            "actual": avg_avail,
+            "target": active_std["avail"],
+            "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
+        },
+        "Performance": {
+            "defisit": active_std["perf"] - avg_perf,
+            "actual": avg_perf,
+            "target": active_std["perf"],
+            "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
+        },
+        "Quality": {
+            "defisit": active_std["qual"] - avg_qual,
+            "actual": avg_qual,
+            "target": active_std["qual"],
+            "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
+        },
+    }
+
+    problem_factors = [
+        (name, data)
+        for name, data in factor_details.items()
+        if data["defisit"] > 0.001
+    ]
+    problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
+
+    # ANALISIS LOSS TIME (Pencegah Blind Spot Target Rendah)
+    loss_setup = df_filtered["Setup & Adjustment"].sum() if "Setup & Adjustment" in df_filtered.columns else 0
+    loss_downtime = df_filtered["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_filtered.columns else 0
+    loss_stops = df_filtered["Idling & Minor Stops"].sum() if "Idling & Minor Stops" in df_filtered.columns else 0
+
+    slow_col = "Slow Cycles" if "Slow Cycles" in df_filtered.columns else "Reduced Speed"
+    loss_slow = df_filtered[slow_col].sum() if slow_col in df_filtered.columns else 0
+
+    loss_summary = {
+        "Setup & Adjustment": loss_setup,
+        "Unplanned Downtime": loss_downtime,
+        "Idling & Minor Stops": loss_stops,
+        "Slow Cycles": loss_slow,
+    }
+
+    top_loss_type = max(loss_summary, key=loss_summary.get)
+    top_loss_minutes = loss_summary[top_loss_type]
+
+    if top_loss_type in df_filtered.columns:
+        line_loss = df_filtered.groupby("LineID")[top_loss_type].sum().sort_values(ascending=False)
+        worst_line = line_loss.index[0] if not line_loss.empty else "-"
+        worst_line_minutes = line_loss.iloc[0] if not line_loss.empty else 0
+    else:
+        worst_line, worst_line_minutes = "-", 0
+
+    if top_loss_minutes > 120 and not problem_factors:
+        st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
+        st.markdown(
+            f"""
+            Meskipun persentase OEE saat ini pada **{selected_line}** telah mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
+
+            **Langkah Perbaikan Prioritas AI:**
+            * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
+            * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
+            * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
+            """
+        )
+    elif problem_factors:
+        p1_name, p1_val = problem_factors[0]
+        st.warning(f"⚠️ **Fokus Perbaiki {p1_name} Terlebih Dahulu!**")
+        st.write(factor_details[p1_name]["action"])
+    else:
+        st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
+        st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
 
 
 # SIDEBAR LOGO & CONTROLS
@@ -324,21 +334,16 @@ if uploaded_file is not None:
         ] = avg_monthly_all_lines
         df_summary.to_csv(SUMMARY_FILE, index=False)
 
-        # -------------------------------------------------------------
-        # SIDEBAR FILTER DATA (LINE & PERIODE WAKTU / KAIZEN ANALYTICS)
-        # -------------------------------------------------------------
         st.sidebar.markdown("---")
         st.sidebar.markdown(
             "<h4 style='color: #E2E8F0;'>Filter Data</h4>",
             unsafe_allow_html=True,
         )
 
-        # 1. Filter Line
         sorted_lines = sorted(list(df["LineID"].dropna().unique()))
         lines = ["Semua Line"] + sorted_lines
         selected_line = st.sidebar.selectbox("Pilih Production Line:", lines)
 
-        # 2. Filter Periode Waktu
         time_filter_option = st.sidebar.radio(
             "Mode Periode Waktu:",
             ["Semua Periode (1 Bulan)", "Mingguan (Week 1 - Week 4)", "Custom Range Tanggal"]
@@ -378,22 +383,18 @@ if uploaded_file is not None:
             st.warning("⚠️ Tidak ada data untuk rentang tanggal yang dipilih. Silakan sesuaikan kembali filter periode waktu di sidebar.")
             st.stop()
 
-        # Data yang sudah di-filter Line & Waktu untuk analisis detail
         df_filtered = (
             filtered_df_time.copy()
             if selected_line == "Semua Line"
             else filtered_df_time[filtered_df_time["LineID"] == selected_line]
         )
 
-        # -------------------------------------------------------------
-        # SEKSI A: EXECUTIVE SUMMARY & STATUS LINE
-        # -------------------------------------------------------------
+        # SEKSI A: EXECUTIVE SUMMARY
         st.markdown(
             '<div class="section-title">A. Executive Summary — Status Line & Pencapaian Tahunan</div>',
             unsafe_allow_html=True,
         )
 
-        # REKAP STATUS SELURUH LINE BERDASARKAN PERIODE YANG DIPILIH
         filtered_df_time["Target_Line"] = filtered_df_time["LineID"].apply(
             lambda x: get_target_by_line(x)["oee"]
         )
@@ -434,21 +435,16 @@ if uploaded_file is not None:
         st.markdown("<br>", unsafe_allow_html=True)
 
         fig_trend_year = go.Figure()
-        bar_colors = []
-        for v in df_summary["OEE_Aktual"]:
-            if pd.notnull(v):
-                bar_colors.append("#3B82F6" if v >= 94.0 else "#F87171")
-            else:
-                bar_colors.append("#1F2937")
+        bar_colors = [
+            "#3B82F6" if pd.notnull(v) and v >= 94.0 else ("#F87171" if pd.notnull(v) else "#1F2937")
+            for v in df_summary["OEE_Aktual"]
+        ]
 
         fig_trend_year.add_trace(
             go.Bar(
                 x=df_summary["Bulan"],
                 y=df_summary["OEE_Aktual"],
-                text=[
-                    f"{v:.1f}%" if pd.notnull(v) else ""
-                    for v in df_summary["OEE_Aktual"]
-                ],
+                text=[f"{v:.1f}%" if pd.notnull(v) else "" for v in df_summary["OEE_Aktual"]],
                 textposition="outside",
                 marker_color=bar_colors,
                 name="Aktual OEE",
@@ -461,9 +457,7 @@ if uploaded_file is not None:
             line_width=3,
             annotation_text="Target: 94%",
             annotation_position="top right",
-            annotation_font=dict(
-                color="#EF4444", size=12, family="Arial Black"
-            ),
+            annotation_font=dict(color="#EF4444", size=12, family="Arial Black"),
         )
 
         fig_trend_year.update_layout(
@@ -479,16 +473,6 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        df["Target_Avail"] = df["LineID"].apply(
-            lambda x: get_target_by_line(x)["avail"]
-        )
-        df["Target_Perf"] = df["LineID"].apply(
-            lambda x: get_target_by_line(x)["perf"]
-        )
-        df["Target_Qual"] = df["LineID"].apply(
-            lambda x: get_target_by_line(x)["qual"]
-        )
-
         active_std = (
             DEFAULT_OVERALL_STD
             if selected_line == "Semua Line"
@@ -500,29 +484,6 @@ if uploaded_file is not None:
         avg_perf = df_filtered["Perf_pct"].mean()
         avg_qual = df_filtered["Qual_pct"].mean()
 
-        status_text, status_type = get_health_status(avg_oee, active_std["oee"])
-
-        if status_type == "critical":
-            st.error(
-                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
-                f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Catatan Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
-            )
-        elif status_type == "warning":
-            st.warning(
-                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
-                f"**OEE berada di bawah Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Catatan Operasional: Perhatian supervisor & evaluasi harian pada akar masalah utama."
-            )
-        else:
-            st.success(
-                f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
-                f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
-                f"Catatan Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
-            )
-
-        st.markdown("---")
-
         def get_badge_html(diff, target_text):
             if diff >= 0:
                 return f'<span class="metric-badge badge-success">+{diff:.2f}% vs {target_text}</span>'
@@ -533,627 +494,25 @@ if uploaded_file is not None:
         diff_perf = avg_perf - active_std["perf"]
         diff_qual = avg_qual - active_std["qual"]
 
-        std_oee_txt = f"Target {active_std['oee']:.2f}%"
-        std_avail_txt = f"Target {active_std['avail']:.1f}%"
-        std_perf_txt = f"Target {active_std['perf']:.1f}%"
-        std_qual_txt = f"Target {active_std['qual']:.2f}%"
-
         c1, c2, c3, c4 = st.columns(4)
-        c1.markdown(
-            f'<div class="metric-card"><div class="metric-title">Overall OEE</div><div class="metric-value">{avg_oee:.2f}%</div>{get_badge_html(diff_oee, std_oee_txt)}</div>',
-            unsafe_allow_html=True,
-        )
-        c2.markdown(
-            f'<div class="metric-card"><div class="metric-title">Availability</div><div class="metric-value">{avg_avail:.2f}%</div>{get_badge_html(diff_avail, std_avail_txt)}</div>',
-            unsafe_allow_html=True,
-        )
-        c3.markdown(
-            f'<div class="metric-card"><div class="metric-title">Performance</div><div class="metric-value">{avg_perf:.2f}%</div>{get_badge_html(diff_perf, std_perf_txt)}</div>',
-            unsafe_allow_html=True,
-        )
-        c4.markdown(
-            f'<div class="metric-card"><div class="metric-title">Quality Rate</div><div class="metric-value">{avg_qual:.2f}%</div>{get_badge_html(diff_qual, std_qual_txt)}</div>',
-            unsafe_allow_html=True,
-        )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        col_left, col_right = st.columns([1, 1.2])
-
-        with col_left:
-            st.markdown(
-                '<div class="section-title">B. Benchmark Target vs Aktual</div>',
-                unsafe_allow_html=True,
-            )
-            df_overall_comp = pd.DataFrame(
-                {
-                    "Kategori": ["Target Line", "Aktual OEE"],
-                    "Nilai": [active_std["oee"], avg_oee],
-                }
-            )
-            fig_overall = px.bar(
-                df_overall_comp,
-                x="Kategori",
-                y="Nilai",
-                text="Nilai",
-                color="Kategori",
-                color_discrete_map={
-                    "Target Line": "#3B82F6",
-                    "Aktual OEE": (
-                        "#10B981" if avg_oee >= active_std["oee"] else "#EF4444"
-                    ),
-                },
-            )
-            fig_overall.update_traces(
-                texttemplate="%{text:.2f}%", textposition="outside"
-            )
-            fig_overall.update_layout(
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#9CA3AF"),
-                yaxis=dict(range=[0, 115]),
-                showlegend=False,
-                height=340,
-            )
-            st.plotly_chart(fig_overall, use_container_width=True)
-
-        with col_right:
-            st.markdown(
-                '<div class="section-title">Daftar Status Line Produksi</div>',
-                unsafe_allow_html=True,
-            )
-            if selected_line != "Semua Line":
-                status_lbl, _ = get_health_status(avg_oee, active_std["oee"])
-                st.info(
-                    f"**Line:** {selected_line}\n\n"
-                    f"**Status:** {status_lbl}\n\n"
-                    f"**OEE:** {avg_oee:.2f}% | **Target:** {active_std['oee']:.2f}% | **Gap:** {(avg_oee - active_std['oee']):+.2f}%"
-                )
-            else:
-                line_summary = (
-                    filtered_df_time.groupby("LineID")
-                    .agg(
-                        {
-                            "OEE_pct": "mean",
-                            "Target_Line": "first",
-                            "Avail_pct": "mean",
-                            "Perf_pct": "mean",
-                            "Qual_pct": "mean",
-                        }
-                    )
-                    .reset_index()
-                )
-
-                line_summary["Status"], _ = zip(
-                    *line_summary.apply(
-                        lambda r: get_health_status(r["OEE_pct"], r["Target_Line"]),
-                        axis=1,
-                    )
-                )
-
-                line_summary["Gap"] = line_summary["OEE_pct"] - line_summary["Target_Line"]
-                line_summary = line_summary.sort_values(by="Gap", ascending=True)
-
-                display_tbl = line_summary[
-                    ["Status", "LineID", "Target_Line", "OEE_pct", "Gap"]
-                ].copy()
-                display_tbl.columns = [
-                    "Status",
-                    "Nama Line",
-                    "Target OEE",
-                    "Aktual OEE",
-                    "Deviasi Gap",
-                ]
-                display_tbl["Target OEE"] = display_tbl["Target OEE"].apply(
-                    lambda x: f"{x:.2f}%"
-                )
-                display_tbl["Aktual OEE"] = display_tbl["Aktual OEE"].apply(
-                    lambda x: f"{x:.2f}%"
-                )
-                display_tbl["Deviasi Gap"] = display_tbl["Deviasi Gap"].apply(
-                    lambda x: f"{x:+.2f}%"
-                )
-
-                display_tbl.index = range(1, len(display_tbl) + 1)
-                st.dataframe(display_tbl, height=270, use_container_width=True)
+        c1.markdown(f'<div class="metric-card"><div class="metric-title">Overall OEE</div><div class="metric-value">{avg_oee:.2f}%</div>{get_badge_html(diff_oee, f"Target {active_std[\'oee\']:.2f}%")}</div>', unsafe_allow_html=True)
+        c2.markdown(f'<div class="metric-card"><div class="metric-title">Availability</div><div class="metric-value">{avg_avail:.2f}%</div>{get_badge_html(diff_avail, f"Target {active_std[\'avail\']:.1f}%")}</div>', unsafe_allow_html=True)
+        c3.markdown(f'<div class="metric-card"><div class="metric-title">Performance</div><div class="metric-value">{avg_perf:.2f}%</div>{get_badge_html(diff_perf, f"Target {active_std[\'perf\']:.1f}%")}</div>', unsafe_allow_html=True)
+        c4.markdown(f'<div class="metric-card"><div class="metric-title">Quality Rate</div><div class="metric-value">{avg_qual:.2f}%</div>{get_badge_html(diff_qual, f"Target {active_std[\'qual\']:.2f}%")}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
 
-        # PARETO ANALYSIS GLOBAL
-        st.markdown(
-            '<div class="section-title">C. Breakdown Six Big Losses & Diagram Pareto Kerugian (Menit)</div>',
-            unsafe_allow_html=True,
-        )
-
-        EXPLICIT_LOSS_COLS = [
-            "Unplanned Downtime",
-            "Setup & Adjustment",
-            "Idling & Minor Stops",
-            "Reduced Speed",
-            "Process Defects",
-            "Startup Losses",
-            "Planned Shutdown (Non-OEE)",
-        ]
-
-        available_loss_cols = [
-            col for col in EXPLICIT_LOSS_COLS if col in df.columns
-        ]
-        for col in available_loss_cols:
-            if df[col].dtype == "object":
-                df[col] = df[col].astype(str).str.replace(",", ".").str.strip()
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-
-        df_filtered_loss = df_filtered.copy()
-
-        loss_data = {}
-        for col in available_loss_cols:
-            total_val = df_filtered_loss[col].sum()
-            loss_data[col] = round(total_val)
-
-        loss_sums = pd.DataFrame(
-            list(loss_data.items()), columns=["Penyebab_Losses", "Menit"]
-        )
-
-        missing_explicit = [
-            c for c in EXPLICIT_LOSS_COLS if c not in loss_sums["Penyebab_Losses"].values
-        ]
-        if missing_explicit:
-            df_missing = pd.DataFrame(
-                {"Penyebab_Losses": missing_explicit, "Menit": [0] * len(missing_explicit)}
-            )
-            loss_sums = pd.concat([loss_sums, df_missing], ignore_index=True)
-
-        loss_sums = loss_sums.sort_values(by="Menit", ascending=False).reset_index(drop=True)
-
-        loss_sums["Kumulatif_Menit"] = loss_sums["Menit"].cumsum()
-        total_loss_min = loss_sums["Menit"].sum()
-
-        if total_loss_min > 0:
-            loss_sums["Kumulatif_Pct"] = (
-                loss_sums["Kumulatif_Menit"] / total_loss_min
-            ) * 100
-        else:
-            loss_sums["Kumulatif_Pct"] = 0.0
-
-        top_5_losses = loss_sums.head(5)
-
-        col_pareto_chart, col_pareto_table = st.columns([1.5, 1])
-
-        with col_pareto_chart:
-            fig_pareto = make_subplots(specs=[[{"secondary_y": True}]])
-
-            fig_pareto.add_trace(
-                go.Bar(
-                    x=loss_sums["Penyebab_Losses"],
-                    y=loss_sums["Menit"],
-                    name="Durasi (Menit)",
-                    marker_color="#EF4444",
-                    text=[f"{int(m):,}m" for m in loss_sums["Menit"]],
-                    textposition="outside",
-                ),
-                secondary_y=False,
-            )
-
-            fig_pareto.add_trace(
-                go.Scatter(
-                    x=loss_sums["Penyebab_Losses"],
-                    y=loss_sums["Kumulatif_Pct"],
-                    name="Kumulatif (%)",
-                    mode="lines+markers",
-                    line=dict(color="#F59E0B", width=3),
-                    marker=dict(size=7),
-                ),
-                secondary_y=True,
-            )
-
-            fig_pareto.add_hline(
-                y=80,
-                line_dash="dash",
-                line_color="#10B981",
-                annotation_text="Batas Pareto 80%",
-                secondary_y=True,
-            )
-
-            fig_pareto.update_layout(
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#9CA3AF"),
-                height=380,
-                showlegend=False,
-                xaxis=dict(tickangle=-25),
-            )
-            fig_pareto.update_yaxes(
-                title_text="Durasi Kerugian (Menit)", secondary_y=False
-            )
-            fig_pareto.update_yaxes(
-                title_text="Kumulatif (%)",
-                range=[0, 110],
-                secondary_y=True,
-            )
-
-            st.plotly_chart(fig_pareto, use_container_width=True)
-
-        with col_pareto_table:
-            st.markdown(
-                "<h4 style='color: #F3F4F6;'>Top 5 Akar Masalah Utama</h4>",
-                unsafe_allow_html=True,
-            )
-            top_5_display = top_5_losses[
-                ["Penyebab_Losses", "Menit", "Kumulatif_Pct"]
-            ].copy()
-            top_5_display.columns = [
-                "Kategori Losses",
-                "Durasi (Menit)",
-                "Kumulatif (%)",
-            ]
-            top_5_display["Durasi (Menit)"] = top_5_display[
-                "Durasi (Menit)"
-            ].apply(lambda x: f"{int(x):,} menit")
-            top_5_display["Kumulatif (%)"] = top_5_display[
-                "Kumulatif (%)"
-            ].apply(lambda x: f"{x:.1f}%")
-            top_5_display.index = range(1, len(top_5_display) + 1)
-
-            st.dataframe(top_5_display, use_container_width=True)
-
-            if total_loss_min > 0:
-                top3_pct = top_5_losses["Kumulatif_Pct"].iloc[
-                    min(2, len(top_5_losses) - 1)
-                ]
-                st.caption(
-                    f"**Total Kerugian Operasional:** {int(total_loss_min):,} Menit. Dengan mengatasi Top 3 penyebab teratas, tim dapat menyelesaikan **{top3_pct:.1f}%** dari total seluruh kendala lini produksi."
-                )
+        # SEKSI H: AI EXECUTIVE INSIGHTS
+        render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual, selected_line)
 
         st.markdown("---")
 
-        # BREAKDOWN SIX BIG LOSSES PER LINE
-        st.markdown(
-            '<div class="section-title">D. Matrix Breakdown Six Big Losses per Line & Prioritas Perbaikan</div>',
-            unsafe_allow_html=True,
-        )
-
-        df_line_losses = filtered_df_time.groupby("LineID")[available_loss_cols].sum()
-        df_line_losses = df_line_losses.round(0).astype(int)
-
-        df_line_losses["TOTAL_LOSSES"] = df_line_losses.sum(axis=1)
-        df_line_losses = df_line_losses.sort_values(
-            by="TOTAL_LOSSES", ascending=False
-        )
-
-        top_cause_per_line = []
-        for idx_line, row_l in df_line_losses.iterrows():
-            causes_only = row_l.drop("TOTAL_LOSSES")
-            if causes_only.max() > 0:
-                top_cause_name = causes_only.idxmax()
-                top_cause_val = causes_only.max()
-                top_cause_per_line.append(
-                    f"{top_cause_name} ({top_cause_val:,} min)"
-                )
-            else:
-                top_cause_per_line.append("N/A")
-
-        df_line_losses_display = df_line_losses.copy()
-        df_line_losses_display["Penyebab Utama Dominan"] = top_cause_per_line
-
-        for c_col in available_loss_cols + ["TOTAL_LOSSES"]:
-            df_line_losses_display[c_col] = df_line_losses_display[c_col].apply(
-                lambda x: f"{x:,}"
-            )
-
-        ordered_cols = (
-            ["TOTAL_LOSSES", "Penyebab Utama Dominan"] + available_loss_cols
-        )
-        df_line_losses_display = df_line_losses_display[ordered_cols]
-
-        col_matrix_tbl, col_priority_info = st.columns([1.6, 1])
-
-        with col_matrix_tbl:
-            st.markdown(
-                "<h4 style='color: #F3F4F6;'>Matrix Total Waktu Hilang (Menit) per Line</h4>",
-                unsafe_allow_html=True,
-            )
-            st.dataframe(df_line_losses_display, height=350, use_container_width=True)
-
-        with col_priority_info:
-            st.markdown(
-                "<h4 style='color: #EF4444;'>Urutan Line Prioritas Perbaikan</h4>",
-                unsafe_allow_html=True,
-            )
-
-            worst_3_lines = df_line_losses.head(3)
-
-            priority_html = ""
-            for i, (l_name, l_row) in enumerate(worst_3_lines.iterrows(), 1):
-                tot_l = l_row["TOTAL_LOSSES"]
-                causes_only = l_row.drop("TOTAL_LOSSES")
-                main_l_name = causes_only.idxmax() if causes_only.max() > 0 else "-"
-                main_l_val = causes_only.max()
-
-                priority_html += f"""
-                <div style="background-color: #1E293B; border-left: 4px solid #EF4444; padding: 10px 14px; margin-bottom: 10px; border-radius: 6px;">
-                    <div style="font-weight: bold; color: #F8FAFC;">Prioritas #{i}: {l_name}</div>
-                    <div style="font-size: 0.88rem; color: #94A3B8;">Total Kerugian: <b style="color:#F87171;">{tot_l:,} Menit</b></div>
-                    <div style="font-size: 0.85rem; color: #F59E0B;">Fokus Utama: <b>{main_l_name}</b> ({main_l_val:,} Menit)</div>
-                </div>
-                """
-
-            st.markdown(priority_html, unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # RATIO PENCAPAIAN
-        st.markdown(
-            '<div class="section-title">E. Ratio Pencapaian per Line [Ratio]</div>',
-            unsafe_allow_html=True,
-        )
-        df_line_ratio = (
-            filtered_df_time.groupby("LineID")
-            .agg({"Target_Line": "first", "OEE_pct": "mean"})
-            .reset_index()
-        )
-        df_line_ratio["Target_Line"] = df_line_ratio["Target_Line"].replace(
-            0, 1
-        )
-        df_line_ratio["Ratio"] = (
-            df_line_ratio["OEE_pct"] / df_line_ratio["Target_Line"]
-        )
-        df_line_ratio["Selisih_pct"] = (
-            df_line_ratio["OEE_pct"] - df_line_ratio["Target_Line"]
-        )
-        df_line_ratio = df_line_ratio.sort_values(by="Ratio", ascending=False)
-
-        ratio_colors = [
-            "#60A5FA" if r >= 1.0 else "#F87171" for r in df_line_ratio["Ratio"]
-        ]
-
-        fig_ratio = go.Figure()
-        hover_texts = [
-            f"<b>{line}</b><br>Target: {tgt:.2f}%<br>Aktual: {oee:.2f}%<br>Selisih: {sel:+.2f}%<br>Ratio: {r:.3f}"
-            for line, tgt, oee, sel, r in zip(
-                df_line_ratio["LineID"],
-                df_line_ratio["Target_Line"],
-                df_line_ratio["OEE_pct"],
-                df_line_ratio["Selisih_pct"],
-                df_line_ratio["Ratio"],
-            )
-        ]
-
-        fig_ratio.add_trace(
-            go.Bar(
-                x=df_line_ratio["LineID"],
-                y=df_line_ratio["Ratio"],
-                marker_color=ratio_colors,
-                text=[f"{r:.3f}" for r in df_line_ratio["Ratio"]],
-                textposition="outside",
-                hoverinfo="text",
-                hovertext=hover_texts,
-            )
-        )
-        fig_ratio.add_shape(
-            type="line",
-            x0=-0.5,
-            x1=len(df_line_ratio["LineID"]) - 0.5,
-            y0=1.0,
-            y1=1.0,
-            line=dict(color="#EF4444", width=3),
-        )
-        fig_ratio.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#9CA3AF"),
-            yaxis=dict(
-                title="[Ratio]",
-                range=[0, max(df_line_ratio["Ratio"].max() * 1.15, 1.3)],
-            ),
-            xaxis=dict(title="", tickangle=-45),
-            height=430,
-            showlegend=False,
-        )
-        st.plotly_chart(fig_ratio, use_container_width=True)
-
-        st.markdown("---")
-
-        # TREND HARIAN
-        st.markdown(
-            f'<div class="section-title">F. Tren Pencapaian OEE Harian Line {selected_line}</div>',
-            unsafe_allow_html=True,
-        )
-        df_daily = (
-            df_filtered.groupby("Tgl")["OEE_pct"].mean().reset_index()
-        )
-        df_daily["Tgl_Str"] = df_daily["Tgl"].dt.strftime("%d %b %Y")
-
-        fig_line = go.Figure()
-        fig_line.add_trace(
-            go.Scatter(
-                x=df_daily["Tgl_Str"],
-                y=df_daily["OEE_pct"],
-                mode="lines+markers",
-                line=dict(color="#10B981", width=3),
-                marker=dict(size=8, color="#34D399"),
-                text=[f"{val:.1f}%" for val in df_daily["OEE_pct"]],
-                hoverinfo="x+text",
-            )
-        )
-        fig_line.add_hline(
-            y=active_std["oee"],
-            line_dash="dash",
-            line_color="#EF4444",
-            line_width=2,
-            annotation_text=f"Target Line ({active_std['oee']:.2f}%)",
-            annotation_position="top right",
-        )
-        fig_line.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#9CA3AF"),
-            yaxis=dict(title="OEE (%)"),
-            xaxis=dict(title="Tanggal Produksi", type="category", tickangle=-45),
-            height=420,
-            showlegend=False,
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-
-        # SEKSI KALKULATOR SIMULASI WHAT-IF
-        st.markdown("---")
-        st.markdown(
-            '<div class="section-title">G. Kalkulator Simulasi & What-If Analysis (Pengambilan Keputusan Proaktif)</div>',
-            unsafe_allow_html=True,
-        )
-
-        with st.container():
-            st.markdown('<div class="sim-card">', unsafe_allow_html=True)
-            st.markdown("#### Simulasi Dampak Pengurangan Downtime Terhadap OEE")
-            
-            sim_col_input, sim_col_output = st.columns([1, 1.2])
-
-            with sim_col_input:
-                target_sim_line = st.selectbox(
-                    "Pilih Line untuk Simulasi:", 
-                    sorted_lines, 
-                    index=sorted_lines.index(selected_line) if selected_line in sorted_lines else 0,
-                    key="sim_line_select"
-                )
-                downtime_reduction_pct = st.slider(
-                    f"Target Pengurangan Unplanned Downtime (%):",
-                    min_value=0,
-                    max_value=100,
-                    value=20,
-                    step=5,
-                    help="Geser slider untuk melihat potensi kenaikan OEE jika downtime berhasil diturunkan."
-                )
-
-                df_sim_line = df_filtered[df_filtered["LineID"] == target_sim_line] if selected_line == "Semua Line" else df_filtered
-                num_days = len(df_sim_line["Tgl"].unique()) if len(df_sim_line) > 0 else 1
-                
-                curr_line_oee = df_sim_line["OEE_pct"].mean() if not df_sim_line.empty else 0
-                curr_line_avail = df_sim_line["Avail_pct"].mean() if not df_sim_line.empty else 0
-                curr_line_perf = df_sim_line["Perf_pct"].mean() if not df_sim_line.empty else 0
-                curr_line_qual = df_sim_line["Qual_pct"].mean() if not df_sim_line.empty else 0
-                target_line_oee = get_target_by_line(target_sim_line)["oee"]
-
-                total_unplanned_dt = df_sim_line["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_sim_line.columns else 0
-                dt_saved_min = total_unplanned_dt * (downtime_reduction_pct / 100.0)
-                remaining_dt_min = total_unplanned_dt - dt_saved_min
-
-                total_planned_operating_time = (num_days * 24 * 60)
-                
-                if total_planned_operating_time > 0 and total_unplanned_dt > 0:
-                    sim_avail = ((total_planned_operating_time - remaining_dt_min) / total_planned_operating_time) * 100.0
-                    sim_avail = min(sim_avail, 100.0)
-                else:
-                    sim_avail = curr_line_avail + (100.0 - curr_line_avail) * (downtime_reduction_pct / 100.0)
-
-                sim_oee = (sim_avail / 100.0) * (curr_line_perf / 100.0) * (curr_line_qual / 100.0) * 100.0
-                oee_gain = sim_oee - curr_line_oee
-
-            with sim_col_output:
-                st.markdown(f"**Proyeksi Perbaikan untuk Line: {target_sim_line}**")
-                
-                s_c1, s_c2, s_c3 = st.columns(3)
-                s_c1.metric("OEE Saat Ini", f"{curr_line_oee:.2f}%")
-                s_c2.metric("Proyeksi OEE Baru", f"{sim_oee:.2f}%", delta=f"+{oee_gain:.2f}%")
-                s_c3.metric("Target OEE Line", f"{target_line_oee:.2f}%")
-
-                dt_per_day_target = (remaining_dt_min / num_days) if num_days > 0 else 0
-                
-                if sim_oee >= target_line_oee:
-                    st.success(
-                        f"✅ **Target Tercapai!** Dengan menurunkan Downtime sebesar **{downtime_reduction_pct}%** "
-                        f"(menghemat **{int(dt_saved_min):,} menit**), OEE Line diproyeksikan naik menjadi **{sim_oee:.2f}%** "
-                        f"(Melampaui target **{target_line_oee:.2f}%**)."
-                    )
-                else:
-                    st.warning(
-                        f"⚠️ **Masih Perlu Perbaikan:** Penurunan Downtime **{downtime_reduction_pct}%** meningkatkan OEE ke **{sim_oee:.2f}%**, "
-                        f"namun masih kurang **{(target_line_oee - sim_oee):.2f}%** dari target. Kombinasikan dengan perbaikan *Speed Loss* / *Setup Time*."
-                    )
-
-                st.info(
-                    f"💡 **Target Mingguan/Harian Tim Production:** Batasi total Unplanned Downtime maksimal **{int(dt_per_day_target)} menit/hari** "
-                    f"(atau **{int(dt_per_day_target * 7)} menit/minggu**) untuk memastikan target OEE tercapai sebelum akhir bulan."
-                )
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # DIAGNOSIS AI
-        st.markdown(
-            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
-            unsafe_allow_html=True,
-        )
-
-        factor_details = {
-            "Availability": {
-                "defisit": active_std["avail"] - avg_avail,
-                "actual": avg_avail,
-                "target": active_std["avail"],
-                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
-            },
-            "Performance": {
-                "defisit": active_std["perf"] - avg_perf,
-                "actual": avg_perf,
-                "target": active_std["perf"],
-                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
-            },
-            "Quality": {
-                "defisit": active_std["qual"] - avg_qual,
-                "actual": avg_qual,
-                "target": active_std["qual"],
-                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
-            },
-        }
-
-        problem_factors = [
-            (name, data)
-            for name, data in factor_details.items()
-            if data["defisit"] > 0.001
-        ]
-        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
-
-        if problem_factors:
-            p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
-
-            prioritas_text = ""
-            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
-                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
-        else:
-            header_status = (
-                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-            )
-            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
-            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
-
-        st.markdown(
-            f"""
-### Laporan Diagnosis AI: {selected_line}
-Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
-
----
-
-#### Rekomendasi Utama: {header_status}
-{desc_status}
-
-#### Urutan Matriks Prioritas Perbaikan:
-{prioritas_text}
-"""
-        )
-        with st.expander("Lihat Data Excel Mentah Detail"):
-            st.dataframe(df_filtered, use_container_width=True)
-
-         # -------------------------------------------------------------
-        # SEKSI G: PDCA ACTION PLAN TRACKER
-        # -------------------------------------------------------------
+        # SEKSI I: PDCA ACTION PLAN TRACKER
         st.markdown(
             '<div class="section-title">I. PDCA & Monitoring Improvement</div>',
             unsafe_allow_html=True,
         )
 
-        # 1. Masukkan data ke session_state agar tidak hilang saat reload
         if "df_action" not in st.session_state:
             st.session_state.df_action = load_or_init_action_plan()
 
@@ -1176,26 +535,19 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                         "Target Selesai": f_target.strftime("%Y-%m-%d"),
                         "Status": f_status
                     }])
-                    # Update data di session_state
                     st.session_state.df_action = pd.concat([st.session_state.df_action, new_row], ignore_index=True)
                     st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
                     st.success("Rencana aksi berhasil disimpan!")
                     st.rerun()
 
-# 2. Siapkan data: Sisipkan kolom "No" di urutan paling awal
         df_editor_input = st.session_state.df_action.copy()
         df_editor_input.insert(0, "No", range(1, len(df_editor_input) + 1))
 
-# 3. Tabel Interaktif (Edit Status & Hapus Baris)
         edited_df = st.data_editor(
             df_editor_input,
-            hide_index=True,  # Sembunyikan index bawaan abu-abu
+            hide_index=True,
             column_config={
-                "No": st.column_config.NumberColumn(
-                    "No",
-                    disabled=True,  # Kunci agar tidak bisa diedit manual
-                    width="small"
-                ),
+                "No": st.column_config.NumberColumn("No", disabled=True, width="small"),
                 "Status": st.column_config.SelectboxColumn(
                     "Status",
                     help="Pilih status PDCA",
@@ -1203,21 +555,18 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                     required=True,
                 )
             },
-            num_rows="dynamic",  # Mengaktifkan fitur hapus/tambah baris
+            num_rows="dynamic",
             use_container_width=True,
             key="pdca_editor",
         )
 
-# 4. Deteksi perubahan (Edit Data atau Hapus Baris)
-        # Buang kolom "No" sesaat untuk membandingkan isi data aslinya
         df_edited_raw = edited_df.drop(columns=["No"]).reset_index(drop=True)
         
-        # Jika terdeteksi ada perbedaan (status berubah atau baris dihapus)
         if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
             st.session_state.df_action = df_edited_raw
             st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
             st.toast("Perubahan data berhasil disimpan!")
-            st.rerun()  # Muat ulang tampilan agar nomor urut tersusun kembali dari 1
+            st.rerun()
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses file: {e}")

@@ -1143,15 +1143,15 @@ if uploaded_file is not None:
     top_loss_minutes = loss_summary[top_loss_type]
 
     # Cari line produksi penyumbang terbesar
-    if top_loss_type in df_filtered.columns:
+        if top_loss_type in df_filtered.columns:
         line_loss = df_filtered.groupby("Line Produksi")[top_loss_type].sum().sort_values(ascending=False)
         worst_line = line_loss.index[0] if not line_loss.empty else "-"
         worst_line_minutes = line_loss.iloc[0] if not line_loss.empty else 0
-    else:
+        else:
         worst_line, worst_line_minutes = "-", 0
 
     # 2. Evaluasi Kerugian Waktu Signifikan (> 120 Menit/Bulan)
-    if top_loss_minutes > 120:
+        if top_loss_minutes > 120:
         st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
         st.markdown(
             f"""
@@ -1163,7 +1163,7 @@ if uploaded_file is not None:
             * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
             """
         )
-    else:
+        else:
         st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
         st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
 

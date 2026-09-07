@@ -1078,12 +1078,13 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # DIAGNOSIS AI
-        st.markdown(
-            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
-            unsafe_allow_html=True,
-        )
+# H. AI EXECUTIVE INSIGHTS & DIAGNOSIS
+    st.markdown(
+        '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
+        unsafe_allow_html=True,
+    )
 
+    try:
         factor_details = {
             "Availability": {
                 "defisit": active_std["avail"] - avg_avail,
@@ -1112,7 +1113,7 @@ if uploaded_file is not None:
         ]
         problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-if problem_factors:
+        if problem_factors:
             p1_name, p1_val = problem_factors[0]
             header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
             st.warning(f"⚠️ **{header_status}**")
@@ -1143,7 +1144,6 @@ if problem_factors:
         else:
             worst_line, worst_line_minutes = "-", 0
 
-        # Baris 1146: Geser ke dalam sejajar dengan blok di atasnya
         if top_loss_minutes > 120 and not problem_factors:
             st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
             st.markdown(
@@ -1161,7 +1161,8 @@ if problem_factors:
             st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
 
     except Exception as e:
-        st.error(f"Terjadi kesalahan pada analisis AI: {e}")    
+        st.error(f"Terjadi kesalahan pada analisis AI: {e}")
+        
             st.markdown(
             f"""
             Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.

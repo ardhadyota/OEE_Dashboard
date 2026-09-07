@@ -1168,6 +1168,13 @@ if problem_factors:
             * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
             """
         )
+        elif not problem_factors:
+        st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
+        st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
+
+    # PENUTUP BLOK TRY DARI BAGIAN ATAS
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat mengolah data diagnosis AI: {e}")
         else:
         st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
         st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")

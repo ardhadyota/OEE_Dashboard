@@ -1143,9 +1143,11 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             unsafe_allow_html=True,
         )
 
-        df_action = load_or_init_action_plan()
+        # 1. Masukkan data ke session_state agar tidak hilang saat reload
+        if "df_action" not in st.session_state:
+            st.session_state.df_action = load_or_init_action_plan()
 
-        with st.expander("➕ Tambah Rencana Aksi PDCA Baru", expanded=False):
+        with st.expander("➕ Tambah Rencana PDCA Baru", expanded=False):
             with st.form("add_action_form"):
                 f_date = st.date_input("Tanggal Inisiasi")
                 f_line = st.selectbox("Line Produksi", sorted_lines)
@@ -1164,12 +1166,39 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                         "Target Selesai": f_target.strftime("%Y-%m-%d"),
                         "Status": f_status
                     }])
-                    df_action = pd.concat([df_action, new_row], ignore_index=True)
-                    df_action.to_csv(ACTION_PLAN_FILE, index=False)
+                    # Update data di session_state
+                    st.session_state.df_action = pd.concat([st.session_state.df_action, new_row], ignore_index=True)
+                    st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
                     st.success("Rencana aksi berhasil disimpan!")
                     st.rerun()
 
-        st.dataframe(df_action, use_container_width=True)
+        # 2. Atur penomoran tabel mulai dari 1 dengan nama header "No"
+        df_editor_input = st.session_state.df_action.copy()
+        df_editor_input.index = range(1, len(df_editor_input) + 1)
+        df_editor_input.index.name = "No"
+
+        # 3. Gunakan st.data_editor agar status bisa diubah langsung via dropdown di dalam tabel
+        edited_df = st.data_editor(
+            df_editor_input,
+            column_config={
+                "Status": st.column_config.SelectboxColumn(
+                    "Status",
+                    help="Pilih status PDCA",
+                    options=["Plan", "Do", "Check", "Action", "Closed"],
+                    required=True,
+                )
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="pdca_editor",
+        )
+
+        # 4. Deteksi perubahan pada tabel dan simpan otomatis ke CSV
+        df_edited_raw = edited_df.reset_index(drop=True)
+        if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
+            st.session_state.df_action = df_edited_raw
+            st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
+            st.toast("Perubahan data berhasil disimpan!")
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses file: {e}")

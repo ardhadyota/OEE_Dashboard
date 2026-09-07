@@ -1118,47 +1118,50 @@ if uploaded_file is not None:
             st.warning(f"⚠️ **{header_status}**")
             st.write(factor_details[p1_name]["action"])
 
-    # ANALISIS LOSS TIME (Pencegah Blind Spot Target Rendah)
-    loss_setup = df_filtered["Setup & Adjustment"].sum() if "Setup & Adjustment" in df_filtered.columns else 0
-    loss_downtime = df_filtered["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_filtered.columns else 0
-    loss_stops = df_filtered["Idling & Minor Stops"].sum() if "Idling & Minor Stops" in df_filtered.columns else 0
+        # ANALISIS LOSS TIME (Pencegah Blind Spot Target Rendah)
+        loss_setup = df_filtered["Setup & Adjustment"].sum() if "Setup & Adjustment" in df_filtered.columns else 0
+        loss_downtime = df_filtered["Unplanned Downtime"].sum() if "Unplanned Downtime" in df_filtered.columns else 0
+        loss_stops = df_filtered["Idling & Minor Stops"].sum() if "Idling & Minor Stops" in df_filtered.columns else 0
 
-    slow_col = "Slow Cycles" if "Slow Cycles" in df_filtered.columns else "Reduced Speed"
-    loss_slow = df_filtered[slow_col].sum() if slow_col in df_filtered.columns else 0
+        slow_col = "Slow Cycles" if "Slow Cycles" in df_filtered.columns else "Reduced Speed"
+        loss_slow = df_filtered[slow_col].sum() if slow_col in df_filtered.columns else 0
 
-    loss_summary = {
-        "Setup & Adjustment": loss_setup,
-        "Unplanned Downtime": loss_downtime,
-        "Idling & Minor Stops": loss_stops,
-        "Slow Cycles": loss_slow,
-    }
+        loss_summary = {
+            "Setup & Adjustment": loss_setup,
+            "Unplanned Downtime": loss_downtime,
+            "Idling & Minor Stops": loss_stops,
+            "Slow Cycles": loss_slow,
+        }
 
-    top_loss_type = max(loss_summary, key=loss_summary.get)
-    top_loss_minutes = loss_summary[top_loss_type]
+        top_loss_type = max(loss_summary, key=loss_summary.get)
+        top_loss_minutes = loss_summary[top_loss_type]
 
-    if top_loss_type in df_filtered.columns:
-        line_loss = df_filtered.groupby("Line Produksi")[top_loss_type].sum().sort_values(ascending=False)
-        worst_line = line_loss.index[0] if not line_loss.empty else "-"
-        worst_line_minutes = line_loss.iloc[0] if not line_loss.empty else 0
-    else:
-        worst_line, worst_line_minutes = "-", 0
+        if top_loss_type in df_filtered.columns:
+            line_loss = df_filtered.groupby("Line Produksi")[top_loss_type].sum().sort_values(ascending=False)
+            worst_line = line_loss.index[0] if not line_loss.empty else "-"
+            worst_line_minutes = line_loss.iloc[0] if not line_loss.empty else 0
+        else:
+            worst_line, worst_line_minutes = "-", 0
 
-    if top_loss_minutes > 120 and not problem_factors:
-        st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
-        st.markdown(
-            f"""
-            Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
+        if top_loss_minutes > 120 and not problem_factors:
+            st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
+            st.markdown(
+                f"""
+                Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
 
-            **Langkah Perbaikan Prioritas AI:**
-            * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
-            * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
-            * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
-            """
-        )
-    elif not problem_factors:
-        st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
-        st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
-        st.markdown(
+                **Langkah Perbaikan Prioritas AI:**
+                * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
+                * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
+                * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
+                """
+            )
+        elif not problem_factors:
+            st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
+            st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
+    except Exception as e:
+        st.error(f"Terjadi kesalahan pada analisis AI: {e}")
+            
+            st.markdown(
             f"""
             Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
 

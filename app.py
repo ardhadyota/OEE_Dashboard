@@ -1167,7 +1167,8 @@ if uploaded_file is not None:
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("---")
-    # ==========================================
+
+        # ==========================================
     # G. MATRIKS PRIORITAS PERBAIKAN
     # ==========================================
     try:
@@ -1175,11 +1176,14 @@ if uploaded_file is not None:
             '<div class="section-title">G. Matriks Prioritas Perbaikan</div>',
             unsafe_allow_html=True,
         )
-        # (Kode visualisasi/analisis Seksi G Anda di sini)
+        # (Seluruh kode grafik/tabel Seksi G Anda ada di dalam sini)
 
     except Exception as e:
         st.error(f"Terjadi kesalahan pada Seksi G: {e}")
+
+    # ==========================================
     # H. AI EXECUTIVE INSIGHTS & DIAGNOSIS
+    # ==========================================
     render_ai_executive_insights(df_filtered, active_std, avg_avail, avg_perf, avg_qual)
 
         

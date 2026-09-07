@@ -517,7 +517,7 @@ if uploaded_file is not None:
         else:
             st.success(
                 f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
-                f"**Performa Operasional Memenuhi / Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
+                f"**Performa Operasional Melebihi Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
                 f"Catatan Operasional: Pertahankan performa operasional & kepatuhan Preventive Maintenance."
             )
 

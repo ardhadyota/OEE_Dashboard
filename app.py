@@ -113,11 +113,21 @@ def load_or_init_action_plan():
         "Status",
     ]
     if os.path.exists(ACTION_PLAN_FILE):
-        return pd.read_csv(ACTION_PLAN_FILE)
-    else:
-        df_init = pd.DataFrame(columns=cols)
-        df_init.to_csv(ACTION_PLAN_FILE, index=False)
-        return df_init
+        try:
+            # Baca CSV dan pastikan nilai kosong tidak bikin error
+            df = pd.read_csv(ACTION_PLAN_FILE, dtype=str).fillna("")
+            # Pastikan semua kolom utama tersedia
+            for col in cols:
+                if col not in df.columns:
+                    df[col] = ""
+            return df[cols]
+        except Exception:
+            pass
+
+    # Buat file baru jika belum ada atau rusak
+    df_init = pd.DataFrame(columns=cols)
+    df_init.to_csv(ACTION_PLAN_FILE, index=False)
+    return df_init
 
 
 # FUNGSI PENENTU STATUS LINE

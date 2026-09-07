@@ -1112,7 +1112,7 @@ if uploaded_file is not None:
         ]
         problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-if problem_factors:
+            if problem_factors:
         p1_name, p1_val = problem_factors[0]
         header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
         st.warning(f"⚠️ **{header_status}**")

@@ -1143,21 +1143,22 @@ if uploaded_file is not None:
         else:
             worst_line, worst_line_minutes = "-", 0
 
-        if top_loss_minutes > 120 and not problem_factors:
-            st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
-            st.markdown(
-                f"""
-                Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
+if top_loss_minutes > 120 and not problem_factors:
+        st.error(f"⚠️ **Rekomendasi Utama: Terdeteksi Pemborosan Waktu Signifikan ({top_loss_minutes:.0f} Menit)!**")
+        st.markdown(
+            f"""
+            Meskipun persentase OEE saat ini mencapai target, terdapat potensi efisiensi besar yang terbuang pada kategori **{top_loss_type}** sebesar **{top_loss_minutes:.0f} menit**.
 
-                **Langkah Perbaikan Prioritas AI:**
-                * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
-                * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
-                * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
-                """
-            )
-        elif not problem_factors:
-            st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
-            st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
+            **Langkah Perbaikan Prioritas AI:**
+            * **Fokus Utama Line:** Line **{worst_line}** menyumbang kerugian terbesar yaitu **{worst_line_minutes:.0f} menit**.
+            * **Saran Aksional:** Terapkan metode *Single-Minute Exchange of Die* (SMED) untuk mereduksi waktu persiapan/pergantian cetakan (*setup*) hingga di bawah 10 menit.
+            * **Evaluasi Target OEE:** Target OEE saat ini terlalu rendah/longgar. Naikkan target bertahap sebesar **5% - 10%** untuk menekan pemborosan waktu henti.
+            """
+        )
+    elif not problem_factors:
+        st.success("✅ **Rekomendasi Utama: Proses Produksi Sangat Efisien!**")
+        st.write("Total waktu terbuang di seluruh line sangat minim. Pertahankan performa ini!")
+    
     except Exception as e:
         st.error(f"Terjadi kesalahan pada analisis AI: {e}")
             

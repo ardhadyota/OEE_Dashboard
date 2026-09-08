@@ -6,6 +6,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+import streamlit as st
+import pandas as pd
+from supabase import create_client, Client
+
+# Koneksi ke Supabase via Streamlit Secrets
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(

@@ -562,7 +562,7 @@ if uploaded_file is not None:
 
         with col_left:
             st.markdown(
-                '<div class="section-title">B. Target vs Aktual OEE</div>',
+                '<div class="section-title">B.1 Target vs Aktual OEE</div>',
                 unsafe_allow_html=True,
             )
             df_overall_comp = pd.DataFrame(
@@ -599,7 +599,7 @@ if uploaded_file is not None:
 
         with col_right:
             st.markdown(
-                '<div class="section-title">Daftar Status Line Produksi</div>',
+                '<div class="section-title">B.2 Daftar Status Line Produksi</div>',
                 unsafe_allow_html=True,
             )
             if selected_line != "Semua Line":

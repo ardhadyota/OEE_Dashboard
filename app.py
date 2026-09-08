@@ -4,7 +4,7 @@ import re
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplotso
+from plotly.subplots import make_subplots
 import streamlit as st
 
 # 1. KONFIGURASI HALAMAN DAN STYLES

@@ -562,7 +562,7 @@ if uploaded_file is not None:
 
         with col_left:
             st.markdown(
-                '<div class="section-title">B.1 Target vs Aktual OEE</div>',
+                '<div class="section-title">B.1 Target vs Aktual OEE Semua Line</div>',
                 unsafe_allow_html=True,
             )
             df_overall_comp = pd.DataFrame(

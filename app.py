@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-
+	# === KONFIGURASI TAUTAN EKSTERNAL ===
+DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
 
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(
@@ -1292,8 +1293,6 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
 else:
     st.info("💡 Silakan unggah berkas Excel data harian OEE melalui panel kontrol di sebelah kiri untuk memulai analisis.")
 
-	# === KONFIGURASI TAUTAN EKSTERNAL ===
-DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
 
 # FOOTER
 st.markdown(

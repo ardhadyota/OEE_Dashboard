@@ -1015,7 +1015,7 @@ if uploaded_file is not None:
                     key="sim_line_select"
                 )
                 downtime_reduction_pct = st.slider(
-                    f"Target Pengurangan Unplanned Downtime (%):",
+                    f"Target Penurunan Downtime Tidak Terencana (%):",
                     min_value=0,
                     max_value=100,
                     value=20,

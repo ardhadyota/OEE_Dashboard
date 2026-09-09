@@ -1127,7 +1127,7 @@ if uploaded_file is not None:
             worst_r = underperforming.iloc[0]['LineID']
             worst_l = hidden_loss.iloc[0]['LineID']
             header_status = f"Peringatan Sistem! Target belum tercapai pada {worst_r} & pemborosan tersembunyi pada {worst_l}"
-            desc_status = f"Terdapat **{len(underperforming)} lini** yang belum memenuhi sasaran OEE. Selain itu, terdeteksi **{len(hidden_loss)} lini** yang memenuhi sasaran tetapi memiliki waktu terbuang sangat tinggi (indikasi standar sasaran terlalu rendah)."
+            desc_status = f":red[Terdapat **{len(underperforming)} lini** yang belum memenuhi sasaran OEE. Selain itu, terdeteksi **{len(hidden_loss)} lini** yang memenuhi sasaran tetapi memiliki waktu terbuang sangat tinggi (indikasi standar sasaran terlalu rendah).]"
         elif not underperforming.empty:
             header_status = f"Prioritaskan Perbaikan Lini {underperforming.iloc[0]['LineID']}"
             desc_status = f"Terdapat **{len(underperforming)} lini** produksi yang belum memenuhi sasaran OEE."

@@ -29,10 +29,10 @@ def render_sdca_banner(drive_url: str):
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                 <div>
                     <div style="font-weight: bold; color: #60A5FA; font-size: 1rem;">
-                        📁 Repositori Standarisasi Operasional (SDCA)
+                        📁 Repositori Standardisasi & Sustainment (SDCA)
                     </div>
                     <div style="font-size: 0.85rem; color: #94A3B8; margin-top: 4px;">
-                        Simpan dan pastikan seluruh tindakan PDCA berstatus <b>Closed</b> terikat pada Prosedur Operasi Standar (SOP).
+                       Mengunci hasil improvement melalui standardisasi proses dan pembaruan SOP.
                     </div>
                 </div>
                 <div style="background-color: #2563EB; color: #FFFFFF; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; white-space: nowrap;">

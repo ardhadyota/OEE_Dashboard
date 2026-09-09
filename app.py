@@ -1080,7 +1080,7 @@ if uploaded_file is not None:
 
         # DIAGNOSIS AI
         st.markdown(
-            '<div class="section-title">H. AI Executive Insights dan Diagnosis Performa Spesifik Line</div>',
+            '<div class="section-title">H. AI Diagnosis Performa Line</div>',
             unsafe_allow_html=True,
         )
 
@@ -1166,7 +1166,7 @@ if uploaded_file is not None:
 	    
         st.markdown(
             f"""
-### AI Manufacturing Diagnosis : {selected_line}
+### Diagnosis Manufaktur Berbasis AI : {selected_line}
 Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
 
 ---

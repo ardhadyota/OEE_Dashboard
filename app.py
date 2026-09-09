@@ -505,7 +505,7 @@ if uploaded_file is not None:
         if status_type == "critical":
             st.error(
                 f"**STATUS: {status_text} — Line: {selected_line}**\n\n"
-                f"**Defisit OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
+                f"**OEE melebihi 5% dari Target** (Aktual: {avg_oee:.2f}% vs Target: {active_std['oee']:.2f}%)\n\n"
                 f"Catatan Operasional: Eskalasi segera ke Manajer Produksi & Engineering untuk intervensi darurat."
             )
         elif status_type == "warning":
@@ -1126,7 +1126,7 @@ if uploaded_file is not None:
         if not underperforming.empty and not hidden_loss.empty:
             worst_r = underperforming.iloc[0]['LineID']
             worst_l = hidden_loss.iloc[0]['LineID']
-            header_status = f"Peringatan Sistem! Defisit Pencapaian pada {worst_r} & Pemborosan Tersembunyi pada {worst_l}"
+            header_status = f"Peringatan Sistem! Target Belum Tercapai pada {worst_r} & Pemborosan Tersembunyi pada {worst_l}"
             desc_status = f"Terdapat **{len(underperforming)} lini** yang belum memenuhi sasaran OEE. Selain itu, terdeteksi **{len(hidden_loss)} lini** yang memenuhi sasaran tetapi memiliki waktu terbuang sangat tinggi (indikasi standar sasaran terlalu rendah)."
         elif not underperforming.empty:
             header_status = f"Prioritaskan Perbaikan Lini {underperforming.iloc[0]['LineID']}"

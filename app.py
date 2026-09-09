@@ -1104,7 +1104,7 @@ if uploaded_file is not None:
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
             },
         }
-# 1. Merge data rasio dengan data loss berdasarkan nama Line
+		# 1. Merge data rasio dengan data loss berdasarkan nama Line
         df_merged_ai = df_line_ratio.merge(
             worst_3_lines[['TOTAL_LOSSES']], 
             left_on='LineID', 

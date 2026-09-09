@@ -1104,7 +1104,7 @@ if uploaded_file is not None:
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
             },
         }
-    try:
+try:
     problem_factors = [
         (name, data)
         for name, data in factor_details.items()

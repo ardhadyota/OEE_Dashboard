@@ -1153,7 +1153,7 @@ if uploaded_file is not None:
                 idx += 1
 
         if not hidden_loss.empty:
-            prioritas_list.append("### Kategori B: Pemborosan Tersembunyi (Hidden Muda) (Peluang Optimalisasi)\n")
+            prioritas_list.append("### Kategori B: Pemborosan Tersembunyi _Hidden Muda_ (Peluang Optimalisasi)\n")
             for _, row in hidden_loss.iterrows():
                 prioritas_list.append(
                     f"{idx}. **{row['LineID']}**  \n"

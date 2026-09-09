@@ -423,7 +423,7 @@ if uploaded_file is not None:
             unsafe_allow_html=True,
         )
         m2.markdown(
-            f'<div class="status-card-warning"><h4 style="color:#F59E0B;margin:0;">🟡 Warning Zone</h4><h2 style="color:#FFF;margin:5px 0;">{count_warning} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &lt; Target (Perhatian Supervisor)</p></div>',
+            f'<div class="status-card-warning"><h4 style="color:#F59E0B;margin:0;">🟡 Warning Zone</h4><h2 style="color:#FFF;margin:5px 0;">{count_warning} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &lt; Target (Perhatian SPV/FM)</p></div>',
             unsafe_allow_html=True,
         )
         m3.markdown(

@@ -1166,7 +1166,7 @@ if uploaded_file is not None:
 	    
         st.markdown(
             f"""
-### Laporan Diagnosis AI: {selected_line}
+### AI Manufacturing Diagnosis: {selected_line}
 Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line sebesar **{active_std['oee']:.2f}%**.
 
 ---

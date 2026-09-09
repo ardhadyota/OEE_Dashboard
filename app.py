@@ -7,15 +7,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-	# === KONFIGURASI TAUTAN EKSTERNAL ===
-DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
-
+	
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(
     page_title="OEE Executive Analytics - PT. ARGAPURA",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
 
 # Masukkan fungsi ini di bawah st.set_page_config
 def render_sdca_banner(drive_url: str):
@@ -1299,3 +1298,7 @@ st.markdown(
     '<div class="footer">PT. ARGAPURA — Operational Excellence & Executive Dashboard &copy;ardha.2026</div>',
     unsafe_allow_html=True,
 )
+
+# === KONFIGURASI TAUTAN EKSTERNAL ===
+DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
+

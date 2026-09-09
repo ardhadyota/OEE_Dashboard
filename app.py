@@ -427,7 +427,7 @@ if uploaded_file is not None:
             unsafe_allow_html=True,
         )
         m3.markdown(
-            f'<div class="status-card-ontrack"><h4 style="color:#10B981;margin:0;">🟢 On Track</h4><h2 style="color:#FFF;margin:5px 0;">{count_ontrack} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &ge; Target (Sesuai Standar Operasional)</p></div>',
+            f'<div class="status-card-ontrack"><h4 style="color:#10B981;margin:0;">🟢 On Track</h4><h2 style="color:#FFF;margin:5px 0;">{count_ontrack} Line</h2><p style="font-size:0.8rem;color:#9CA3AF;margin:0;">OEE &ge; Target (Sesuai Standard Operasional)</p></div>',
             unsafe_allow_html=True,
         )
 

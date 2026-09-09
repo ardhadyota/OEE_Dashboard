@@ -1104,27 +1104,30 @@ if uploaded_file is not None:
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
             },
         }
-problem_factors = [
-    (name, data)
-    for name, data in factor_details.items()
-    if data["defisit"] > 0.0001 or data["actual"] < data["target"]
-]
-problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-if problem_factors:
-    p1_name, p1_val = problem_factors[0]
-    header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-    desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+        problem_factors = [
+            (name, data)
+            for name, data in factor_details.items()
+            if data["defisit"] > 0.001
+        ]
+        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
 
-    prioritas_text = ""
-    for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-        prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
-        prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
-else:
-    header_status = "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-    desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
-    prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
-        
+        if problem_factors:
+            p1_name, p1_val = problem_factors[0]
+            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
+            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+
+            prioritas_text = ""
+            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
+                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
+                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
+        else:
+            header_status = (
+                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            )
+            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+
         st.markdown(
             f"""
 ### Laporan Diagnosis AI: {selected_line}

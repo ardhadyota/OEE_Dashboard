@@ -1104,21 +1104,21 @@ if uploaded_file is not None:
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
             },
         }
-# Filter line yang rasionya di bawah target (< 1.0)
-        underperforming = df_filtered[df_filtered['Ratio'] < 1.0].sort_values(by='Ratio', ascending=True)
+# Filter line yang rasionya di bawah target (< 1.0) menggunakan df_line_ratio
+        underperforming = df_line_ratio[df_line_ratio['Ratio'] < 1.0].sort_values(by='Ratio', ascending=True)
 
         if not underperforming.empty:
             worst_line = underperforming.iloc[0]
             total_under = len(underperforming)
             
-            header_status = f"Fokus Perbaiki Line {worst_line['Line_Name']} Terlebih Dahulu!"
-            desc_status = f"Terdapat **{total_under} Line** yang belum mencapai target. Defisit terbesar pada **{worst_line['Line_Name']}** dengan rasio **{worst_line['Ratio']:.3f}**."
+            header_status = f"Fokus Perbaiki Line {worst_line['LineID']} Terlebih Dahulu!"
+            desc_status = f"Terdapat **{total_under} Line** yang belum mencapai target. Defisit terbesar pada **{worst_line['LineID']}** dengan rasio **{worst_line['Ratio']:.3f}**."
 
             prioritas_list = []
             for idx, (_, row) in enumerate(underperforming.iterrows(), start=1):
                 defisit_pct = (1.0 - row['Ratio']) * 100
-                prioritas_list.append(f"{idx}. **Prioritas {idx} — {row['Line_Name']}** (Rasio: {row['Ratio']:.3f} | Defisit: -{defisit_pct:.2f}% di bawah target)")
-                prioritas_list.append(f"   *Tindakan:* Evaluasi ulang kendala operasional dan parameter produksi pada {row['Line_Name']}.\n")
+                prioritas_list.append(f"{idx}. **Prioritas {idx} — {row['LineID']}** (Rasio: {row['Ratio']:.3f} | Defisit: -{defisit_pct:.2f}% di bawah target)")
+                prioritas_list.append(f"   *Tindakan:* Evaluasi ulang kendala operasional dan parameter produksi pada {row['LineID']}.\n")
             
             prioritas_text = "\n".join(prioritas_list)
 

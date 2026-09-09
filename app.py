@@ -1122,39 +1122,47 @@ if uploaded_file is not None:
         prioritas_list = []
         idx = 1
 
-        # --- Penyusunan Teks Header & Deskripsi Status ---
+# --- Penyusunan Teks Header & Deskripsi Status ---
         if not underperforming.empty and not hidden_loss.empty:
             worst_r = underperforming.iloc[0]['LineID']
             worst_l = hidden_loss.iloc[0]['LineID']
-            header_status = f"Peringatan AI: Defisit Rasio pada {worst_r} & Hidden Loss pada {worst_l}!"
-            desc_status = f"Ditemukan **{len(underperforming)} Line** yang belum mencapai target OEE. Selain itu, AI mendeteksi **{len(hidden_loss)} Line** yang OEE-nya tercapai namun memiliki waktu loss ekstrem (indikasi target OEE disetel terlalu rendah)."
+            header_status = f"Peringatan Sistem: Defisit Pencapaian pada {worst_r} & Inefisiensi Terselubung pada {worst_l}"
+            desc_status = f"Terdapat **{len(underperforming)} lini** yang belum memenuhi sasaran OEE. Selain itu, terdeteksi **{len(hidden_loss)} lini** yang memenuhi sasaran tetapi memiliki waktu terbuang sangat tinggi (indikasi standar sasaran terlalu rendah)."
         elif not underperforming.empty:
-            header_status = f"Fokus Perbaiki Line {underperforming.iloc[0]['LineID']} Terlebih Dahulu!"
-            desc_status = f"Terdapat **{len(underperforming)} Line** yang belum mencapai target OEE."
+            header_status = f"Prioritaskan Perbaikan Lini {underperforming.iloc[0]['LineID']}"
+            desc_status = f"Terdapat **{len(underperforming)} lini** produksi yang belum memenuhi sasaran OEE."
         elif not hidden_loss.empty:
-            header_status = f"Peluang AI: Evaluasi Target Standar pada {hidden_loss.iloc[0]['LineID']}!"
-            desc_status = f"Semua line mencapai target rasio. Namun, AI mendeteksi **{len(hidden_loss)} Line** memiliki kerugian waktu masif. Target OEE saat ini terlalu rendah dan menyembunyikan inefisiensi."
+            header_status = f"Peluang Optimalisasi Sasaran Lini {hidden_loss.iloc[0]['LineID']}"
+            desc_status = f"Seluruh lini telah memenuhi sasaran. Namun, terdeteksi **{len(hidden_loss)} lini** dengan waktu terbuang yang masif sehingga standar target perlu dievaluasi ulang."
         else:
-            header_status = "Seluruh Kinerja Optimal dan Terukur!"
-            desc_status = "Luar biasa! Semua target tercapai dan tidak ada kerugian waktu yang melebihi batas toleransi."
+            header_status = "Seluruh Kinerja Operasional Optimal"
+            desc_status = "Luar biasa! Seluruh sasaran produksi tercapai dan tidak terdeteksi pemborosan waktu yang melebihi batas toleransi."
 
-        # --- Penyusunan Daftar Matriks Prioritas ---
+        # --- Penyusunan Matriks Prioritas Perbaikan (Format Baku & Rapi) ---
+        prioritas_list = []
+
         if not underperforming.empty:
-            prioritas_list.append("**KATEGORI A: GAGAL MENCAPAI TARGET OEE (KRITIS)**")
+            prioritas_list.append("### Kategori A: Gagal Memenuhi Sasaran OEE (Kritis)\n")
             for _, row in underperforming.iterrows():
                 defisit_pct = (1.0 - row['Ratio']) * 100
-                prioritas_list.append(f"{idx}. **Prioritas #{idx}: {row['LineID']}** (Rasio: **{row['Ratio']:.3f}** | Defisit: **-{defisit_pct:.2f}%** di bawah target)")
-                prioritas_list.append(f"   *Tindakan:* Evaluasi kendala operasional mendasar pada {row['LineID']}.\n")
+                prioritas_list.append(
+                    f"{idx}. **{row['LineID']}**  \n"
+                    f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} (Defisit: -{defisit_pct:.2f}%)\n"
+                    f"   • **Rekomendasi:** Lakukan pemeriksaan kendala teknis dan operasional untuk menaikkan nilai OEE.\n"
+                )
                 idx += 1
 
         if not hidden_loss.empty:
-            prioritas_list.append("**KATEGORI B: TARGET TERLALU RENDAH / HIDDEN LOSS (PELUANG)**")
+            prioritas_list.append("### Kategori B: Inefisiensi Waktu Terselubung (Peluang Optimalisasi)\n")
             for _, row in hidden_loss.iterrows():
-                prioritas_list.append(f"{idx}. **Prioritas #{idx}: {row['LineID']}** (Rasio: **{row['Ratio']:.3f}** | Total Kerugian: **{int(row['TOTAL_LOSSES'])} Menit**)")
-                prioritas_list.append(f"   *Rekomendasi AI:* OEE tercapai namun kerugian waktu sangat tinggi. **Evaluasi ulang dan naikkan standar OEE target** pada {row['LineID']}, serta pangkas Setup/Adjustment.\n")
+                prioritas_list.append(
+                    f"{idx}. **{row['LineID']}**  \n"
+                    f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} | **Total Waktu Terbuang:** {int(row['TOTAL_LOSSES'])} Menit\n"
+                    f"   • **Rekomendasi:** Tingkatkan nilai sasaran OEE dan pangkas durasi pengesetan serta penyesuaian (*setup & adjustment*).\n"
+                )
                 idx += 1
 
-        prioritas_text = "\n".join(prioritas_list) if prioritas_list else "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
+        prioritas_text = "\n".join(prioritas_list) if prioritas_list else "Tidak ada indikator yang memerlukan tindakan perbaikan saat ini."
 	    
         st.markdown(
             f"""

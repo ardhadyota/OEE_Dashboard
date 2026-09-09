@@ -997,7 +997,7 @@ if uploaded_file is not None:
         # SEKSI KALKULATOR SIMULASI WHAT-IF
         st.markdown("---")
         st.markdown(
-            '<div class="section-title">G. SIMULASI SKENARIO & PROYEKSI PERFORMA (_What-If Analysis_ untuk Pengambilan Keputusan Proaktif)</div>',
+            '<div class="section-title">G. SIMULASI SKENARIO & PROYEKSI PERFORMA (What-If Analysis untuk Pengambilan Keputusan Proaktif)</div>',
             unsafe_allow_html=True,
         )
 

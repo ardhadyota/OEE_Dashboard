@@ -15,6 +15,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# === KONFIGURASI TAUTAN EKSTERNAL ===
+DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
 
 # Masukkan fungsi ini di bawah st.set_page_config
 def render_sdca_banner(drive_url: str):
@@ -1299,6 +1301,4 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# === KONFIGURASI TAUTAN EKSTERNAL ===
-DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
 

@@ -1104,30 +1104,29 @@ if uploaded_file is not None:
                 "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
             },
         }
+# Filter line yang rasionya di bawah target (< 1.0)
+        underperforming = df_filtered[df_filtered['Ratio'] < 1.0].sort_values(by='Ratio', ascending=True)
 
-        problem_factors = [
-            (name, data)
-            for name, data in factor_details.items()
-            if data["defisit"] > 0.001
-        ]
-        problem_factors.sort(key=lambda x: x[1]["defisit"], reverse=True)
+        if not underperforming.empty:
+            worst_line = underperforming.iloc[0]
+            total_under = len(underperforming)
+            
+            header_status = f"Fokus Perbaiki Line {worst_line['Line_Name']} Terlebih Dahulu!"
+            desc_status = f"Terdapat **{total_under} Line** yang belum mencapai target. Defisit terbesar pada **{worst_line['Line_Name']}** dengan rasio **{worst_line['Ratio']:.3f}**."
 
-        if problem_factors:
-            p1_name, p1_val = problem_factors[0]
-            header_status = f"Fokus Perbaiki {p1_name} Terlebih Dahulu!"
-            desc_status = f"Indikator **{p1_name}** pada **{selected_line}** mengalami defisit terbesar yaitu **{p1_val['defisit']:.2f}%** di bawah target (Aktual: {p1_val['actual']:.2f}% vs Target Line: {p1_val['target']:.2f}%)."
+            prioritas_list = []
+            for idx, (_, row) in enumerate(underperforming.iterrows(), start=1):
+                defisit_pct = (1.0 - row['Ratio']) * 100
+                prioritas_list.append(f"{idx}. **Prioritas {idx} — {row['Line_Name']}** (Rasio: {row['Ratio']:.3f} | Defisit: -{defisit_pct:.2f}% di bawah target)")
+                prioritas_list.append(f"   *Tindakan:* Evaluasi ulang kendala operasional dan parameter produksi pada {row['Line_Name']}.\n")
+            
+            prioritas_text = "\n".join(prioritas_list)
 
-            prioritas_text = ""
-            for idx, (fname, fdata) in enumerate(problem_factors, start=1):
-                prioritas_text += f"{idx}. **Prioritas {idx} — {fname}** (Defisit: -{fdata['defisit']:.2f}% | Aktual: {fdata['actual']:.2f}% vs Target Line: {fdata['target']:.2f}%)\n"
-                prioritas_text += f"   *Tindakan:* {fdata['action']}\n"
         else:
-            header_status = (
-                "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
-            )
-            desc_status = f"Luar biasa! Semua faktor (Availability, Performance, Quality) pada **{selected_line}** telah memenuhi atau melampaui target spesifik masing-masing."
+            header_status = "Seluruh Faktor Utama Memenuhi Standar Spesifik!"
+            desc_status = "Luar biasa! Semua faktor pada **Semua Line** telah memenuhi atau melampaui target spesifik masing-masing."
             prioritas_text = "Tidak ada indikator yang memerlukan tindakan perbaikan darurat saat ini."
-
+	    
         st.markdown(
             f"""
 ### Laporan Diagnosis AI: {selected_line}

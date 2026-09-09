@@ -44,9 +44,6 @@ def render_sdca_banner(drive_url: str):
     </a>
     """, unsafe_allow_html=True)
 
-# Panggil fungsi ini di area tampilan PDCA kamu
-render_sdca_banner(DRIVE_STANDARDIZATION_URL)
-
 st.markdown(
     """
     <style>
@@ -1300,5 +1297,8 @@ st.markdown(
     '<div class="footer">PT. ARGAPURA — Operational Excellence & Executive Dashboard &copy;ardha.2026</div>',
     unsafe_allow_html=True,
 )
+
+# Panggil fungsi ini di area tampilan PDCA kamu
+render_sdca_banner(DRIVE_STANDARDIZATION_URL)
 
 

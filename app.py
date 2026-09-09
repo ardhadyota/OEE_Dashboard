@@ -955,7 +955,7 @@ if uploaded_file is not None:
 
         # TREND HARIAN
         st.markdown(
-            f'<div class="section-title">F. Tren Pencapaian OEE Harian Line {selected_line}</div>',
+            f'<div class="section-title">F. Tren Pencapaian OEE Harian {selected_line}</div>',
             unsafe_allow_html=True,
         )
         df_daily = (

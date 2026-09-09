@@ -7,12 +7,44 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
+# === KONFIGURASI TAUTAN EKSTERNAL ===
+DRIVE_STANDARDIZATION_URL = "https://drive.google.com/drive/folders/https://drive.google.com/drive/folders/1xJBCgAaecHy8xxTizyIW2MX4LgqW2h_M?usp=sharing"
+
 # 1. KONFIGURASI HALAMAN DAN STYLES
 st.set_page_config(
     page_title="OEE Executive Analytics - PT. ARGAPURA",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Masukkan fungsi ini di bawah st.set_page_config
+def render_sdca_banner(drive_url: str):
+    if not drive_url or "PASTE_LINK" in drive_url:
+        st.warning("⚠️ Tautan Google Drive Standarisasi belum dikonfigurasi.")
+        return
+
+    st.markdown(f"""
+    <a href="{drive_url}" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+        <div style="background-color: #1E293B; border: 1px solid #3B82F6; border-radius: 8px; padding: 14px 18px; margin: 15px 0 20px 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <div style="font-weight: bold; color: #60A5FA; font-size: 1rem;">
+                        📁 Repositori Standarisasi Operasional (SDCA)
+                    </div>
+                    <div style="font-size: 0.85rem; color: #94A3B8; margin-top: 4px;">
+                        Simpan dan pastikan seluruh tindakan PDCA berstatus <b>Closed</b> terikat pada Prosedur Operasi Standar (SOP).
+                    </div>
+                </div>
+                <div style="background-color: #2563EB; color: #FFFFFF; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; white-space: nowrap;">
+                    Buka Google Drive ↗
+                </div>
+            </div>
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
+
+# Panggil fungsi ini di area tampilan PDCA kamu
+render_sdca_banner(DRIVE_STANDARDIZATION_URL)
 
 st.markdown(
     """

@@ -1291,6 +1291,8 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
 else:
     st.info("💡 Silakan unggah berkas Excel data harian OEE melalui panel kontrol di sebelah kiri untuk memulai analisis.")
 
+# Panggil fungsi ini di area tampilan PDCA kamu
+render_sdca_banner(DRIVE_STANDARDIZATION_URL)
 
 # FOOTER
 st.markdown(
@@ -1298,7 +1300,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Panggil fungsi ini di area tampilan PDCA kamu
-render_sdca_banner(DRIVE_STANDARDIZATION_URL)
+
 
 

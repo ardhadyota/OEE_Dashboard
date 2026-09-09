@@ -1142,7 +1142,7 @@ if uploaded_file is not None:
         prioritas_list = []
 
         if not underperforming.empty:
-            prioritas_list.append("### Kategori A: Gagal Memenuhi Sasaran OEE (Kritis)\n")
+            prioritas_list.append("### Kategori A: Line Yang Belum Mencapai Target OEE\n")
             for _, row in underperforming.iterrows():
                 defisit_pct = (1.0 - row['Ratio']) * 100
                 prioritas_list.append(
@@ -1153,7 +1153,7 @@ if uploaded_file is not None:
                 idx += 1
 
         if not hidden_loss.empty:
-            prioritas_list.append("### Kategori B: Pemborosan Tersembunyi _Hidden Muda_ (Peluang Optimalisasi)\n")
+            prioritas_list.append("### Kategori B: Pemborosan Tersembunyi / _Hidden Muda_ (Peluang Optimalisasi)\n")
             for _, row in hidden_loss.iterrows():
                 prioritas_list.append(
                     f"{idx}. **{row['LineID']}**  \n"

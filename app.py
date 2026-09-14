@@ -1162,46 +1162,46 @@ if uploaded_file is not None:
                 line_data = df[df['LineID'] == line_id]
 
             unplanned = line_data['Unplanned Downtime'].sum() if 'Unplanned Downtime' in line_data.columns else 0
-        setup = line_data['Setup & Adjustment'].sum() if 'Setup & Adjustment' in line_data.columns else 0
+            setup = line_data['Setup & Adjustment'].sum() if 'Setup & Adjustment' in line_data.columns else 0
 
-        # Penarikan fleksibel untuk Speed Losses / Minor Stoppages
-        if 'Speed Losses' in line_data.columns:
-            idling = line_data['Speed Losses'].sum()
-        elif 'Idling & Minor Stoppages' in line_data.columns:
-            idling = line_data['Idling & Minor Stoppages'].sum()
-        elif 'Speed Loss' in line_data.columns:
-            idling = line_data['Speed Loss'].sum()
-        else:
-            idling = 0
-        defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
-
-        avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
-        avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0
-        avg_qual = line_data['Quality'].mean() if 'Quality' in line_data.columns else 1.0
-
-# Cari hambatan utama (3 Losses terendah)
-        losses = {'Availability': avg_avail, 'Performance': avg_perf, 'Quality': avg_qual}
-        worst_factor = min(losses, key=losses.get)
-
-        # AI merumuskan rekomendasi tajam berbasis angka aktual
-        if worst_factor == 'Availability':
-            if unplanned >= setup:
-                ai_rec = f"Fokus **Unplanned Downtime (Kerusakan Mesin)** terdeteksi **{unplanned:.1f} Menit**. Audit jadwal *preventive maintenance* dan *response time* mekanik."
+            # Penarikan fleksibel untuk Speed Losses / Minor Stoppages
+            if 'Speed Losses' in line_data.columns:
+                idling = line_data['Speed Losses'].sum()
+            elif 'Idling & Minor Stoppages' in line_data.columns:
+                idling = line_data['Idling & Minor Stoppages'].sum()
+            elif 'Speed Loss' in line_data.columns:
+                idling = line_data['Speed Loss'].sum()
             else:
-                ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
-        elif worst_factor == 'Performance':
-            ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponen aus, atau *micro-stops* di area penggerak."
-        else:
-            ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
+                idling = 0
+            defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
+
+            avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
+            avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0
+            avg_qual = line_data['Quality'].mean() if 'Quality' in line_data.columns else 1.0
+
+            # Cari hambatan utama (3 Losses terendah)
+            losses = {'Availability': avg_avail, 'Performance': avg_perf, 'Quality': avg_qual}
+            worst_factor = min(losses, key=losses.get)
+
+            # AI merumuskan rekomendasi tajam berbasis angka aktual
+            if worst_factor == 'Availability':
+                if unplanned >= setup:
+                    ai_rec = f"Fokus **Unplanned Downtime (Kerusakan Mesin)** terdeteksi **{unplanned:.1f} Menit**. Audit jadwal *preventive maintenance* dan *response time* mekanik."
+                else:
+                    ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
+            elif worst_factor == 'Performance':
+                ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponen aus, atau *micro-stops* di area penggerak."
+            else:
+                ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
                 
 
-                prioritas_list.append(
-                    f"{idx}. **{line_id}** \n"
-                    f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} (Defisit: -{defisit_pct:.2f}%)\n"
-                    f"   • **Faktor Terendah:** {worst_factor} ({losses[worst_factor]*100:.1f}%)\n"
-                    f"   • **Diagnosis & Rekomendasi AI:** {ai_rec}\n"
-                )
-                idx += 1
+            prioritas_list.append(
+                f"{idx}. **{line_id}** \n"
+                f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} (Defisit: -{defisit_pct:.2f}%)\n"
+                f"   • **Faktor Terendah:** {worst_factor} ({losses[worst_factor]*100:.1f}%)\n"
+                f"   • **Diagnosis & Rekomendasi AI:** {ai_rec}\n"
+            )
+            idx += 1
 
         if not hidden_loss.empty:
             prioritas_list.append("### Kategori B: Pemborosan Tersembunyi / _Hidden Muda_ (Peluang Optimalisasi)\n")

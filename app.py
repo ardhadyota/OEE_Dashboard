@@ -1109,33 +1109,13 @@ if uploaded_file is not None:
 
         st.markdown("---")
 
-        # DIAGNOSIS AI
+# DIAGNOSIS AI
         st.markdown(
             '<div class="section-title">H. AI Diagnosis Performa Line</div>',
             unsafe_allow_html=True,
         )
 
-        factor_details = {
-            "Availability": {
-                "defisit": active_std["avail"] - avg_avail,
-                "actual": avg_avail,
-                "target": active_std["avail"],
-                "action": "Fokus pada pengurangan unplanned breakdown dan optimasi waktu pergantian cetakan (SMED).",
-            },
-            "Performance": {
-                "defisit": active_std["perf"] - avg_perf,
-                "actual": avg_perf,
-                "target": active_std["perf"],
-                "action": "Analisis penurunan speed operasional mesin serta kurangi frekuensi henti singkat (minor stops).",
-            },
-            "Quality": {
-                "defisit": active_std["qual"] - avg_qual,
-                "actual": avg_qual,
-                "target": active_std["qual"],
-                "action": "Tingkatkan inspeksi material awal dan evaluasi ulang setelan standar parameter proses.",
-            },
-        }
-		# 1. Merge data rasio dengan data loss berdasarkan nama Line
+        # 1. Merge data rasio dengan data loss & detail kolom dari Excel
         df_merged_ai = df_line_ratio.merge(
             worst_3_lines[['TOTAL_LOSSES']], 
             left_on='LineID', 
@@ -1150,10 +1130,7 @@ if uploaded_file is not None:
         # 3. Deteksi Kategori B: Hidden Loss (Ratio >= 1.0 TAPI Kerugian Waktu > 500 Menit)
         hidden_loss = df_merged_ai[(df_merged_ai['Ratio'] >= 1.0) & (df_merged_ai['TOTAL_LOSSES'] > 500)].sort_values(by='TOTAL_LOSSES', ascending=False)
 
-        prioritas_list = []
-        idx = 1
-
-# --- Penyusunan Teks Header & Deskripsi Status ---
+        # --- Penyusunan Teks Header & Deskripsi Status ---
         if not underperforming.empty and not hidden_loss.empty:
             worst_r = underperforming.iloc[0]['LineID']
             worst_l = hidden_loss.iloc[0]['LineID']
@@ -1169,17 +1146,49 @@ if uploaded_file is not None:
             header_status = "Seluruh Kinerja Operasional Optimal"
             desc_status = "Luar biasa! Seluruh sasaran produksi tercapai dan tidak terdeteksi pemborosan waktu yang melebihi batas toleransi."
 
-        # --- Penyusunan Matriks Prioritas Perbaikan (Format Baku & Rapi) ---
+        # --- Penyusunan Matriks Prioritas Perbaikan (AI Dynamic Breakdown) ---
         prioritas_list = []
+        idx = 1
 
         if not underperforming.empty:
             prioritas_list.append("### Kategori A: Line Yang Belum Mencapai Target OEE\n")
             for _, row in underperforming.iterrows():
+                line_id = row['LineID']
                 defisit_pct = (1.0 - row['Ratio']) * 100
+                
+                # 🧠 LOGIKA AI: Ambil data agregat harian untuk LineID terkait dari df_filtered
+                line_data = df_filtered[df_filtered['LineID'] == line_id]
+                
+                unplanned = line_data['Unplanned Downtime'].sum() if 'Unplanned Downtime' in line_data.columns else 0
+                setup = line_data['Setup & Adjustment'].sum() if 'Setup & Adjustment' in line_data.columns else 0
+                idling = line_data['Idling & Minor Stoppages'].sum() if 'Idling & Minor Stoppages' in line_data.columns else (
+                         line_data['Speed Losses'].sum() if 'Speed Losses' in line_data.columns else 0)
+                defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
+
+                avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
+                avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0
+                avg_qual = line_data['Quality'].mean() if 'Quality' in line_data.columns else 1.0
+
+                # Cari hambatan utama (3 Losses terendah)
+                losses = {'Availability': avg_avail, 'Performance': avg_perf, 'Quality': avg_qual}
+                worst_factor = min(losses, key=losses.get)
+
+                # AI merumuskan rekomendasi tajam berbasis angka aktual
+                if worst_factor == 'Availability':
+                    if unplanned >= setup:
+                        ai_rec = f"Fokus **Unplanned Downtime (Kerusakan Mesin)** terdeteksi **{unplanned:.1f} Menit**. Audit jadwal *preventive maintenance* dan *response time* mekanik."
+                    else:
+                        ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
+                elif worst_factor == 'Performance':
+                    ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponenaus, atau *micro-stops* di area penggerak."
+                else:
+                    ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
+
                 prioritas_list.append(
-                    f"{idx}. **{row['LineID']}**  \n"
+                    f"{idx}. **{line_id}** \n"
                     f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} (Defisit: -{defisit_pct:.2f}%)\n"
-                    f"   • **Rekomendasi:** Lakukan pemeriksaan kendala teknis dan operasional untuk menaikkan nilai OEE.\n"
+                    f"   • **Faktor Terendah:** {worst_factor} ({losses[worst_factor]*100:.1f}%)\n"
+                    f"   • **Diagnosis & Rekomendasi AI:** {ai_rec}\n"
                 )
                 idx += 1
 
@@ -1187,14 +1196,14 @@ if uploaded_file is not None:
             prioritas_list.append("### Kategori B: Pemborosan Tersembunyi / _Hidden Muda_ (Peluang Optimalisasi)\n")
             for _, row in hidden_loss.iterrows():
                 prioritas_list.append(
-                    f"{idx}. **{row['LineID']}**  \n"
+                    f"{idx}. **{row['LineID']}** \n"
                     f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} | **Total Waktu Terbuang:** {int(row['TOTAL_LOSSES'])} Menit\n"
-                    f"   • **Rekomendasi:** Tingkatkan nilai sasaran OEE dan pangkas durasi pengesetan serta penyesuaian (*setup & adjustment*).\n"
+                    f"   • **Rekomendasi AI:** Target OEE lini ini terlalu longgar. Naikkan target standar OEE dan pangkas durasi *Setup & Adjustment*.\n"
                 )
                 idx += 1
 
         prioritas_text = "\n".join(prioritas_list) if prioritas_list else "Tidak ada indikator yang memerlukan tindakan perbaikan saat ini."
-	    
+
         st.markdown(
             f"""
 ### Diagnosis Manufaktur Berbasis AI : {selected_line}
@@ -1211,6 +1220,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         )
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
+
 
         # -------------------------------------------------------------
         # SEKSI G: PDCA ACTION PLAN TRACKER

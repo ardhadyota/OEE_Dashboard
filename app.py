@@ -1210,7 +1210,7 @@ if uploaded_file is not None:
                 prioritas_list.append(
                     f"{idx}. **{line_id}** \n"
                     f"   • **Rasio Pencapaian:** {row['Ratio']:.3f} (Defisit: -{defisit_pct:.2f}%)\n"
-                    f"   • **Faktor Terendah:** {worst_factor} ({losses[worst_factor]*100:.1f}%)\n"
+                    f"   • **Faktor Terendah:** {worst_factor} ({losses[worst_factor]:.1f}%)\n"
                     f"   • **Diagnosis & Rekomendasi AI:** {ai_rec}\n"
                 )
                 idx += 1

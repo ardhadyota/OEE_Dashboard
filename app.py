@@ -1179,20 +1179,21 @@ if uploaded_file is not None:
         avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0
         avg_qual = line_data['Quality'].mean() if 'Quality' in line_data.columns else 1.0
 
-                # Cari hambatan utama (3 Losses terendah)
-                losses = {'Availability': avg_avail, 'Performance': avg_perf, 'Quality': avg_qual}
-                worst_factor = min(losses, key=losses.get)
+# Cari hambatan utama (3 Losses terendah)
+        losses = {'Availability': avg_avail, 'Performance': avg_perf, 'Quality': avg_qual}
+        worst_factor = min(losses, key=losses.get)
 
-                # AI merumuskan rekomendasi tajam berbasis angka aktual
-                if worst_factor == 'Availability':
-                    if unplanned >= setup:
-                        ai_rec = f"Fokus **Unplanned Downtime (Kerusakan Mesin)** terdeteksi **{unplanned:.1f} Menit**. Audit jadwal *preventive maintenance* dan *response time* mekanik."
-                    else:
-                        ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
-                elif worst_factor == 'Performance':
-                    ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponenaus, atau *micro-stops* di area penggerak."
-                else:
-                    ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
+        # AI merumuskan rekomendasi tajam berbasis angka aktual
+        if worst_factor == 'Availability':
+            if unplanned >= setup:
+                ai_rec = f"Fokus **Unplanned Downtime (Kerusakan Mesin)** terdeteksi **{unplanned:.1f} Menit**. Audit jadwal *preventive maintenance* dan *response time* mekanik."
+            else:
+                ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
+        elif worst_factor == 'Performance':
+            ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponen aus, atau *micro-stops* di area penggerak."
+        else:
+            ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
+                
 
                 prioritas_list.append(
                     f"{idx}. **{line_id}** \n"

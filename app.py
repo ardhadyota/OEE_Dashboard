@@ -1251,7 +1251,6 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                         st.warning("Mohon lengkapi Tema Improvement dan PIC!")
                     else:
                         new_row = pd.DataFrame([{
-                            "No": len(df_action) + 1,
                             "Tanggal Inisiasi": f_date.strftime("%Y-%m-%d"),
                             "Line Produksi": f_line,
                             "Tema Improvement": f_tema,
@@ -1273,6 +1272,10 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
 
 # 2. Siapkan data: Sisipkan kolom "No" di urutan paling awal
         df_editor_input = st.session_state.df_action.copy()
+
+        if "No" in df_editor_input.columns:
+            df_editor_input = df_editor_input.drop(columns=["No"])
+
         df_editor_input.insert(0, "No", range(1, len(df_editor_input) + 1))
 
         # 3. Tabel Interaktif (Edit Status & Hapus Baris)

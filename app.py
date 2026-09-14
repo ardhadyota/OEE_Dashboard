@@ -1234,7 +1234,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                 "Tema Improvement", "PIC", "Target Selesai", "Status"
             ])
 
-		st.session_state.df_action = df_action
+        st.session_state.df_action = df_actio
 
         with st.expander("➕ Tambah Rencana PDCA Baru", expanded=False):
             with st.form("add_action_form"):

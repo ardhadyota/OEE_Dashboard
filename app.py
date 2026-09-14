@@ -1301,15 +1301,16 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         )
 
         # 4. Deteksi perubahan (Edit Data atau Hapus Baris)
-        # Buang kolom "No" sesaat untuk membandingkan isi data aslinya
-        df_edited_raw = edited_df.drop(columns=["No"]).reset_index(drop=True)
-        
-        # Jika terdeteksi ada perbedaan (status berubah atau baris dihapus)
+        df_edited_raw = edited_df.drop(columns=["No"]) if "No" in edited_df.columns else edited_df.copy()
+        df_edited_raw = df_edited_raw.reset_index(drop=True)
+
+        # Cek apakah data di-edit/dihapus dibandingkan dengan data asli
         if not df_edited_raw.equals(st.session_state.df_action.reset_index(drop=True)):
+            # Simpan langsung ke Google Sheets
+            conn.update(worksheet="Sheet1", data=df_edited_raw)
             st.session_state.df_action = df_edited_raw
-            st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
             st.toast("Perubahan data berhasil disimpan!")
-            st.rerun()  # Muat ulang tampilan agar nomor urut tersusun kembali dari 1
+            st.rerun()
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses file: {e}")

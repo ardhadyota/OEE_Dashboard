@@ -1156,14 +1156,25 @@ if uploaded_file is not None:
                 line_id = row['LineID']
                 defisit_pct = (1.0 - row['Ratio']) * 100
                 
-                # 🧠 LOGIKA AI: Ambil data agregat harian untuk LineID terkait dari df_filtered
-                line_data = df_filtered[df_filtered['LineID'] == line_id]
-                
-                unplanned = line_data['Unplanned Downtime'].sum() if 'Unplanned Downtime' in line_data.columns else 0
-                setup = line_data['Setup & Adjustment'].sum() if 'Setup & Adjustment' in line_data.columns else 0
-                idling = line_data['Idling & Minor Stoppages'].sum() if 'Idling & Minor Stoppages' in line_data.columns else (
-                         line_data['Speed Losses'].sum() if 'Speed Losses' in line_data.columns else 0)
-                defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
+            # 🧠 LOGIKA AI: Ambil data agregat harian untuk LineID terkait
+            line_data = df_filtered[df_filtered['LineID'] == line_id]
+            if line_data.empty and 'LineID' in df.columns:
+                line_data = df[df['LineID'] == line_id]
+
+            unplanned = line_data['Unplanned Downtime'].sum() if 'Unplanned Downtime' in line_data.columns else 0
+        setup = line_data['Setup & Adjustment'].sum() if 'Setup & Adjustment' in line_data.columns else 0
+
+        # Penarikan fleksibel untuk Speed Losses / Minor Stoppages
+        if 'Speed Losses' in line_data.columns:
+            idling = line_data['Speed Losses'].sum()
+        elif 'Idling & Minor Stoppages' in line_data.columns:
+            idling = line_data['Idling & Minor Stoppages'].sum()
+        elif 'Speed Loss' in line_data.columns:
+            idling = line_data['Speed Loss'].sum()
+        else:
+            idling = 0
+
+        defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
 
                 avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
                 avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0

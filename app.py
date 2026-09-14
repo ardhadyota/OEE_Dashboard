@@ -1190,9 +1190,10 @@ if uploaded_file is not None:
                 else:
                     ai_rec = f"Fokus **Setup & Adjustment (Dandori)** terhitung tinggi sebesar **{setup:.1f} Menit**. Terapkan metode SMED untuk percepat pergantian cetakan."
             elif worst_factor == 'Performance':
-                ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponen aus, atau *micro-stops* di area penggerak."
-            else:
-                ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
+                if idling > 0:
+				    ai_rec = f"Fokus **Speed Losses / Minor Stoppages** terbuang **{idling:.1f} Menit**. Cek sensor *feeding*, komponen aus, atau *micro-stops* di area penggerak."
+                else:
+                    ai_rec = f"Fokus **Reject / Quality Loss** terakumulasi **{int(defect):,} pcs**. Lakukan re-kalibrasi suhu/tekanan dan validasi *incoming material*."
                 
 
             prioritas_list.append(

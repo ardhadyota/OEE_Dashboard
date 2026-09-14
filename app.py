@@ -1211,7 +1211,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
-         # -------------------------------------------------------------
+        # -------------------------------------------------------------
         # SEKSI G: PDCA ACTION PLAN TRACKER
         # -------------------------------------------------------------
         st.markdown(
@@ -1219,9 +1219,19 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
             unsafe_allow_html=True,
         )
 
-        # 1. Masukkan data ke session_state agar tidak hilang saat reload
-        if "df_action" not in st.session_state:
-            st.session_state.df_action = load_or_init_action_plan()
+        # 1. Inisialisasi koneksi ke Google Sheets
+        conn = st.connection("gsheets", type=GSheetsConnection)
+
+        # 2. Ambil data paling update langsung dari Google Sheets
+        try:
+            df_action = conn.read(worksheet="Sheet1", ttl=0)
+            # Bersihkan baris yang kosong jika ada
+            df_action = df_action.dropna(how="all")
+        except Exception as e:
+            df_action = pd.DataFrame(columns=[
+                "No", "Tanggal Inisiasi", "Line Produksi", 
+                "Tema Improvement", "PIC", "Target Selesai", "Status"
+            ])
 
         with st.expander("➕ Tambah Rencana PDCA Baru", expanded=False):
             with st.form("add_action_form"):
@@ -1234,19 +1244,30 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
 
                 submitted = st.form_submit_button("Simpan Action Plan")
                 if submitted:
-                    new_row = pd.DataFrame([{
-                        "Tanggal Inisiasi": f_date.strftime("%Y-%m-%d"),
-                        "Line Produksi": f_line,
-                        "Tema Improvement": f_tema,
-                        "PIC": f_pic,
-                        "Target Selesai": f_target.strftime("%Y-%m-%d"),
-                        "Status": f_status
-                    }])
-                    # Update data di session_state
-                    st.session_state.df_action = pd.concat([st.session_state.df_action, new_row], ignore_index=True)
-                    st.session_state.df_action.to_csv(ACTION_PLAN_FILE, index=False)
-                    st.success("Rencana aksi berhasil disimpan!")
-                    st.rerun()
+                    if not f_tema or not f_pic:
+                        st.warning("Mohon lengkapi Tema Improvement dan PIC!")
+                    else:
+                        new_row = pd.DataFrame([{
+                            "No": len(df_action) + 1,
+                            "Tanggal Inisiasi": f_date.strftime("%Y-%m-%d"),
+                            "Line Produksi": f_line,
+                            "Tema Improvement": f_tema,
+                            "PIC": f_pic,
+                            "Target Selesai": f_target.strftime("%Y-%m-%d"),
+                            "Status": f_status
+                        }])
+                        
+                        # Gabungkan data lama dengan data baru
+                        updated_df = pd.concat([df_action, new_row], ignore_index=True)
+                        
+                        # KIRIM / UPDATE DATA LANGSUNG KE GOOGLE SHEETS
+                        conn.update(worksheet="Sheet1", data=updated_df)
+                        
+                        st.success("✅ Rencana aksi berhasil disimpan permanen ke Google Sheets!")
+                        st.rerun()
+
+        # Tampilkan tabel data dari Google Sheets
+        st.dataframe(df_action, use_container_width=True)
 
 # 2. Siapkan data: Sisipkan kolom "No" di urutan paling awal
         df_editor_input = st.session_state.df_action.copy()

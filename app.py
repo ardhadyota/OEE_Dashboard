@@ -1175,7 +1175,7 @@ if uploaded_file is not None:
                 idling = 0
             defect = line_data['QtyOutDefect'].sum() if 'QtyOutDefect' in line_data.columns else 0
 
-            avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
+                avg_avail = line_data['% Availibility'].mean() if '% Availibility' in line_data.columns else 1.0
                 avg_perf = line_data['% Performance'].mean() if '% Performance' in line_data.columns else 1.0
                 avg_qual = line_data['Quality'].mean() if 'Quality' in line_data.columns else 1.0
 

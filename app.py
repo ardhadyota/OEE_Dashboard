@@ -1269,8 +1269,7 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
                         st.success("✅ Rencana aksi berhasil disimpan permanen ke Google Sheets!")
                         st.rerun()
 
-        # Tampilkan tabel data dari Google Sheets
-        st.dataframe(df_action, use_container_width=True)
+       
 
 # 2. Siapkan data: Sisipkan kolom "No" di urutan paling awal
         df_editor_input = st.session_state.df_action.copy()

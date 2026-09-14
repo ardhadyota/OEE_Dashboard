@@ -1244,10 +1244,6 @@ Pencapaian OEE saat ini adalah **{avg_oee:.2f}%** dibanding target spesifik line
         with st.expander("Lihat Data Excel Mentah Detail"):
             st.dataframe(df_filtered, use_container_width=True)
 
-import plotly.graph_objects as go
-import plotly.express as px
-import streamlit as st
-
 st.markdown("---")
 st.header("📊 Visualisasi & Analisis Kerugian Interaktif")
 
